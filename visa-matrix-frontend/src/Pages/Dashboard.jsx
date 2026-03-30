@@ -11,10 +11,8 @@ import {
   getChecklistCatalog,
   getDashboardMetrics,
   getDocuments,
-  getLeads,
   getPayments,
   getRecentApplications,
-  getRecentLeads,
   getRecentPayments,
   getVisaDocumentChecklists,
 } from "../services/mockApi";
@@ -24,15 +22,16 @@ export default function Dashboard() {
   const { currentUser } = useAuth();
   const applications = getApplications();
   const payments = getPayments();
-  const leads = getLeads();
   const documents = getDocuments();
   const checklistCatalog = getChecklistCatalog();
   const checklists = getVisaDocumentChecklists();
-  const metrics = getDashboardMetrics(applications, payments, leads, documents);
+  const metrics = getDashboardMetrics(applications, payments, [], documents);
   const recentApplications = getRecentApplications(applications);
   const recentPayments = getRecentPayments(payments);
-  const recentLeads = getRecentLeads(leads);
   const automationAlerts = getAutomationAlerts(applications, documents, payments, checklists);
+  const openApplications = applications.filter(
+    (application) => !["Approved", "Rejected"].includes(application.status),
+  ).length;
 
   return (
     <DashboardLayout>
@@ -80,7 +79,7 @@ export default function Dashboard() {
         <StatCard title="Pending Applications" value={metrics.pendingApplications} icon="PA" color="#F59E0B" />
         <StatCard title="Approved Visas" value={metrics.approvedVisas} icon="AV" color="#22C55E" />
         <StatCard title="Total Revenue" value={formatCurrency(metrics.totalRevenue)} icon="RV" color="#0F172A" />
-        <StatCard title="Active Leads" value={metrics.activeLeads} icon="AL" color="#2563EB" />
+        <StatCard title="Open Applications" value={openApplications} icon="OA" color="#2563EB" />
         <StatCard title="Documents Pending" value={metrics.documentsPending} icon="DP" color="#F97316" />
       </section>
 
@@ -163,18 +162,18 @@ export default function Dashboard() {
         <article className="panel bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition">
           <div className="panel__header">
             <div>
-              <h3>Recent Leads</h3>
+              <h3>Application Activity</h3>
               <p className="text-sm text-gray-500">
-                Fresh demand entering the CRM pipeline from campaigns, referrals, and walk-ins.
+                Latest application records moving through intake, review, and filing.
               </p>
             </div>
           </div>
           <DataTable
-            caption="Recent leads"
+            caption="Application activity"
             columns={[
-              { key: "leadName", label: "Lead Name" },
-              { key: "interestedCountry", label: "Interested Country" },
-              { key: "leadSource", label: "Lead Source" },
+              { key: "id", label: "Application ID" },
+              { key: "customerName", label: "Customer" },
+              { key: "destinationCountry", label: "Destination" },
               {
                 key: "status",
                 label: "Status",
@@ -183,7 +182,7 @@ export default function Dashboard() {
               { key: "assignedAgent", label: "Assigned Agent" },
             ]}
             rowKey="id"
-            rows={recentLeads}
+            rows={recentApplications.slice(0, 5)}
           />
         </article>
       </section>

@@ -50,6 +50,23 @@ export default function Applications() {
     applications[0]?.id ?? "",
   );
 
+  const loadApplications = async (preferredApplicationId = "") => {
+    const nextApplications = await fetchApplications();
+    console.log("Applications refreshed from Supabase:", nextApplications);
+    setApplications(nextApplications);
+    setSelectedApplicationId((currentId) => {
+      const nextSelectedId = preferredApplicationId || currentId;
+
+      if (nextApplications.some((application) => application.id === nextSelectedId)) {
+        return nextSelectedId;
+      }
+
+      return nextApplications[0]?.id ?? "";
+    });
+
+    return nextApplications;
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -97,10 +114,12 @@ export default function Applications() {
             ? currentId
             : nextApplications[0]?.id ?? "",
         );
-      } catch {
+      } catch (loadError) {
+        console.error("Failed to load applications page data:", loadError);
+
         if (isMounted) {
           setSelectedApplicationId((currentId) => currentId || applications[0]?.id || "");
-          setError("Unable to load applications from Supabase.");
+          setError(loadError.message ?? "Unable to load applications from Supabase.");
         }
       } finally {
         if (isMounted) {
@@ -225,30 +244,18 @@ export default function Applications() {
       return;
     }
 
-    const newApplication = normalizeApplicationWorkflow(buildApplicationFromForm(values));
-    setApplications((currentApplications) => [newApplication, ...currentApplications]);
-    setSelectedApplicationId(newApplication.id);
-    setShowNewModal(false);
-    setPage(1);
+    const newApplication = buildApplicationFromForm(values);
 
     try {
-      const persistedApplication = await createApplicationRequest(
-        newApplication,
-      );
-
-      setApplications((currentApplications) =>
-        currentApplications.map((application) =>
-          application.id === newApplication.id
-            ? normalizeApplicationWorkflow({
-                ...newApplication,
-                ...persistedApplication,
-              })
-            : application,
-        ),
-      );
-      setSelectedApplicationId(persistedApplication.id ?? newApplication.id);
-    } catch {
-      // Local fallback preserves the current flow when the API is unavailable.
+      const persistedApplication = await createApplicationRequest(newApplication, currentUser);
+      console.log("Application insert confirmed:", persistedApplication);
+      await loadApplications(persistedApplication.id ?? newApplication.id);
+      setError("");
+      setShowNewModal(false);
+      setPage(1);
+    } catch (createError) {
+      console.error("Failed to create application:", createError);
+      setError(createError.message ?? "Unable to create application.");
     }
   };
 
