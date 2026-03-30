@@ -1,0 +1,189 @@
+const now = new Date().toISOString();
+
+export const createHrMockState = () => ({
+  dashboard: {
+    metrics: {
+      totalEmployees: 126,
+      activeEmployees: 118,
+      openPositions: 9,
+      payrollCost: 8654000,
+      attritionRate: 11.2,
+    },
+    analytics: {
+      hiringFunnel: {
+        applied: 42,
+        screening: 19,
+        interview: 9,
+        offer: 4,
+        hired: 3,
+      },
+      leaveTrends: {
+        pending: 6,
+        approved: 28,
+        rejected: 2,
+      },
+      departmentPerformance: [
+        { department: "Human Resources", score: 4.7 },
+        { department: "Operations", score: 4.3 },
+        { department: "Finance", score: 4.5 },
+      ],
+    },
+    highlights: {
+      approvalsPending: 8,
+      unreadNotifications: 5,
+    },
+  },
+  employees: [
+    {
+      id: "emp-1001",
+      employee_code: "VM-001",
+      name: "Aarav Admin",
+      email: "admin@visamatrix.local",
+      department: "Executive",
+      job_title: "Chief Operations Officer",
+      location: "Bengaluru",
+      status: "active",
+      attrition_risk: "low",
+    },
+    {
+      id: "emp-1002",
+      employee_code: "VM-002",
+      name: "Meera Manager",
+      email: "manager@visamatrix.local",
+      department: "Human Resources",
+      job_title: "HR Manager",
+      location: "Hyderabad",
+      status: "active",
+      attrition_risk: "medium",
+    },
+    {
+      id: "emp-1003",
+      employee_code: "VM-003",
+      name: "Rohan Agent",
+      email: "agent@visamatrix.local",
+      department: "Operations",
+      job_title: "Visa Processing Executive",
+      location: "Pune",
+      status: "active",
+      attrition_risk: "high",
+    },
+  ],
+  employeeProfiles: {
+    "emp-1002": {
+      employee: {
+        id: "emp-1002",
+        employee_code: "VM-002",
+        name: "Meera Manager",
+        email: "manager@visamatrix.local",
+        department: "Human Resources",
+        job_title: "HR Manager",
+        location: "Hyderabad",
+        status: "active",
+      },
+      salary: {
+        currency: "INR",
+        tax_regime: "new",
+        salary_components: {
+          basic: 85000,
+          hra: 34000,
+          special_allowance: 18000,
+          retention_bonus: 5000,
+          deductions: { pf: 1800, insurance: 900 },
+        },
+      },
+      attendance: [
+        { id: "att-1", date: "2026-03-24", status: "present", hours_worked: 9.1 },
+        { id: "att-2", date: "2026-03-23", status: "present", hours_worked: 8.7 },
+      ],
+      leaveHistory: [{ id: "leave-1", type: "earned_leave", start_date: "2026-03-29", end_date: "2026-03-30", status: "pending" }],
+      performance: [{ id: "pr-1", cycle: "2026-H1", rating: 4.8, status: "completed", feedback: "Excellent execution." }],
+      payroll: [{ id: "pay-1", pay_period: "2026-02", gross_pay: 142000, net_pay: 121500, status: "processed" }],
+    },
+  },
+  payrollLogs: [
+    {
+      id: "pay-1",
+      employee_id: "emp-1002",
+      pay_period: "2026-02",
+      gross_pay: 142000,
+      tax_amount: 18700,
+      net_pay: 121500,
+      status: "processed",
+      processed_at: "2026-03-01T09:00:00.000Z",
+    },
+    {
+      id: "pay-2",
+      employee_id: "emp-1003",
+      pay_period: "2026-02",
+      gross_pay: 68800,
+      tax_amount: 6200,
+      net_pay: 60100,
+      status: "processed",
+      processed_at: "2026-03-01T09:00:00.000Z",
+    },
+  ],
+  workflowDefinitions: [
+    {
+      id: "wf-1",
+      module: "attendance",
+      name: "Leave Approval Workflow",
+      steps: [
+        { key: "employee", name: "Employee Submission", approverRole: "employee", order: 1 },
+        { key: "manager", name: "Manager Approval", approverRole: "manager", order: 2 },
+        { key: "hr", name: "HR Approval", approverRole: "hr", order: 3 },
+      ],
+    },
+  ],
+  workflowInstances: [
+    {
+      id: "wfi-1",
+      module: "attendance",
+      reference_id: "leave-1001",
+      status: "pending",
+      current_step: 2,
+      steps: [
+        { key: "employee", status: "approved" },
+        { key: "manager", status: "pending" },
+        { key: "hr", status: "locked" },
+      ],
+    },
+  ],
+  candidates: [
+    { id: "cand-1", name: "Ishita Rao", role: "Senior Recruiter", stage: "screening", owner: "Meera Manager", source: "LinkedIn", score: 82 },
+    { id: "cand-2", name: "Karan Malhotra", role: "Payroll Specialist", stage: "interview", owner: "Aarav Admin", source: "Referral", score: 91 },
+    { id: "cand-3", name: "Sara Khan", role: "HRBP", stage: "offer", owner: "Meera Manager", source: "Agency", score: 88 },
+  ],
+  performanceDashboard: {
+    averageRating: 4.5,
+    completionRate: 76.5,
+    departmentPerformance: [
+      { department: "Human Resources", rating: 4.7 },
+      { department: "Operations", rating: 4.2 },
+      { department: "Finance", rating: 4.6 },
+    ],
+  },
+  performanceReviews: [
+    { id: "pr-1", employee_id: "emp-1002", cycle: "2026-H1", rating: 4.8, goals_completed: 94, department: "Human Resources", status: "completed" },
+    { id: "pr-2", employee_id: "emp-1003", cycle: "2026-H1", rating: 4.1, goals_completed: 81, department: "Operations", status: "in_review" },
+  ],
+  notifications: [
+    { id: "ntf-1", type: "workflow", message: "Leave approval waiting for manager sign-off.", read_status: false, created_at: now },
+    { id: "ntf-2", type: "payroll", message: "Payroll run for March is ready for review.", read_status: false, created_at: now },
+  ],
+  aiInsights: {
+    attritionSignals: [
+      { employee_id: "emp-1003", employee_name: "Rohan Agent", attrition_risk: "high", risk_score: 75, recommendation: "Manager check-in, growth plan, and compensation review." },
+      { employee_id: "emp-1002", employee_name: "Meera Manager", attrition_risk: "medium", risk_score: 52, recommendation: "Monitor engagement cadence and stay interviews." },
+    ],
+    salaryBenchmark: [
+      { employee_id: "emp-1002", average_net_pay: 121500 },
+      { employee_id: "emp-1003", average_net_pay: 60100 },
+    ],
+    leaveAnomalies: [{ leave_request_id: "leave-1001", employee_id: "emp-1003", anomaly: "policy_exception" }],
+    topCandidates: [
+      { candidate_id: "cand-2", name: "Karan Malhotra", score: 91, recommendation: "Fast-track to decision." },
+      { candidate_id: "cand-3", name: "Sara Khan", score: 88, recommendation: "Proceed with structured panel." },
+    ],
+  },
+});
+
