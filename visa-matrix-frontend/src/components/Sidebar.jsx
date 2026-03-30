@@ -1,6 +1,5 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import Logo from "./Logo";
 import { navigationItems } from "../data/navigation";
 import { useAuth } from "../context/AuthContext";
 
@@ -23,7 +22,7 @@ const primaryPaths = [
 
 const sidebarLabels = {
   "/dashboard": "Home",
-  "/crm": "CRM / Leads",
+  "/crm": "CRM",
   "/customers": "Customers",
   "/applications": "Applications",
   "/countries": "Countries",
@@ -136,8 +135,8 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar__header">
         <Link className="sidebar__brand flex items-center gap-2" to="/">
-          <span className="sidebar__brand-mark bg-white-10 p-2 rounded-lg inline-block mb-8">
-            <Logo variant="sidebar" />
+          <span className="sidebar__brand-mark p-2 rounded-lg inline-block mb-8">
+            <img src="/logo.png" alt="Logo" className="h-12 w-auto object-contain" />
           </span>
         </Link>
       </div>

@@ -6,6 +6,7 @@ import countriesRoutes from "./routes/countriesRoutes.js";
 import applicationsRoutes from "./routes/applicationsRoutes.js";
 import accessControlRoutes from "./routes/accessControlRoutes.js";
 import invoicesRoutes from "./routes/invoicesRoutes.js";
+import searchRoutes from "./routes/searchRoutes.js";
 import hrRoutes from "./modules/hr/index.js";
 import enterpriseHrRoutes from "./src/services/hr/index.js";
 import { getSupabaseConfigStatus } from "./config/supabaseClient.js";
@@ -22,6 +23,7 @@ app.use("/api", countriesRoutes);
 app.use("/api", applicationsRoutes);
 app.use("/api", accessControlRoutes);
 app.use("/api", invoicesRoutes);
+app.use("/api", searchRoutes);
 app.use("/api/hr", hrRoutes);
 app.use("/api/v1/hr", enterpriseHrRoutes);
 

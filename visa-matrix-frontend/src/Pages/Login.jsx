@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import Logo from "../components/Logo";
 import { useAuth } from "../context/AuthContext";
 import { signInUser } from "../services/authService";
 
@@ -38,7 +37,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
       <div className="w-full max-w-md">
         <Link className="block text-center" to="/">
-          <Logo variant="auth" />
+          <img src="/logo.png" alt="Visa Matrix" className="h-24 w-24 object-cover object-left mx-auto mb-6" />
         </Link>
 
         <section className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 w-full max-w-md">

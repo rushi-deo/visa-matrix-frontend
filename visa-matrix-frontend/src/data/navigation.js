@@ -1,6 +1,6 @@
 export const navigationItems = [
   { label: "Dashboard", path: "/dashboard", shortLabel: "Dashboard" },
-  { label: "CRM / Leads", path: "/crm", shortLabel: "CRM" },
+  { label: "CRM", path: "/crm", shortLabel: "CRM" },
   { label: "Customers", path: "/customers", shortLabel: "Customers" },
   {
     label: "Visa Applications",
@@ -31,11 +31,6 @@ export const navigationItems = [
     label: "Tasks / Case Management",
     path: "/tasks",
     shortLabel: "Tasks",
-  },
-  {
-    label: "Communication",
-    path: "/communication",
-    shortLabel: "Communication",
   },
   {
     label: "Reports & Analytics",

@@ -1,16 +1,14 @@
 import React from "react";
 import { useState } from "react";
-import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
 import PageHeader from "../components/PageHeader";
-import StatusPill from "../components/StatusPill";
 import TablePagination from "../components/TablePagination";
 import NewApplicationForm from "../forms/NewApplicationForm";
 import DashboardLayout from "../layout/DashboardLayout";
 import { useAuth } from "../context/AuthContext";
 import { useCountries } from "../hooks/useCountries";
 import { getLeads } from "../services/mockApi";
-import { getPageCount, paginateRows } from "../services/erpService";
+import { getPageCount } from "../services/erpService";
 
 const emptyLead = {
   leadName: "",
@@ -59,7 +57,6 @@ export default function CRM() {
 
   const pageSize = 5;
   const pageCount = getPageCount(filteredLeads, pageSize);
-  const visibleLeads = paginateRows(filteredLeads, page, pageSize);
   const countryOptions = [...new Set(countries.map((country) => country.country))];
   const visaTypeOptions = [...new Set(countries.flatMap((country) => country.visa_types))];
 
@@ -216,42 +213,6 @@ export default function CRM() {
             </select>
           </label>
         </div>
-
-        <DataTable
-          caption="Lead management table"
-          columns={[
-            { key: "leadName", label: "Lead Name" },
-            { key: "email", label: "Email" },
-            { key: "phone", label: "Phone" },
-            { key: "interestedCountry", label: "Interested Country" },
-            { key: "leadSource", label: "Lead Source" },
-            {
-              key: "status",
-              label: "Status",
-              render: (row) => <StatusPill label={row.status} />,
-            },
-            { key: "assignedAgent", label: "Assigned Agent" },
-            {
-              key: "actions",
-              label: "Actions",
-              render: (row) => (
-                <div className="table-actions">
-                  {canAccess("invoicing", "create") ? (
-                    <button className="link-button" onClick={() => openConvertModal(row)} type="button">
-                      Convert Lead -&gt; Application
-                    </button>
-                  ) : null}
-                  <button className="link-button" onClick={() => openScheduleModal(row)} type="button">
-                    Schedule Consultation
-                  </button>
-                </div>
-              ),
-            },
-          ]}
-          emptyMessage="No leads match the current filters."
-          rowKey="id"
-          rows={visibleLeads}
-        />
 
         <TablePagination
           itemLabel="lead records"

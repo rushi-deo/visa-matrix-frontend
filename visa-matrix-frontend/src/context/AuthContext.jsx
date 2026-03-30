@@ -4,6 +4,7 @@ import { supabase } from "../supabase";
 
 const AuthContext = createContext(null);
 
+const AUTH_STORAGE_KEY = "visa-matrix-auth";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001/api";
 const fallbackRoles = ["admin", "manager", "agent", "external_user"];
 const fallbackModules = {
@@ -92,10 +93,34 @@ async function apiRequest(path, options = {}) {
 }
 
 function getStoredSession() {
-  return null;
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const rawSession = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    return rawSession ? JSON.parse(rawSession) : null;
+  } catch {
+    return null;
+  }
 }
 
-function setStoredSession() {}
+function setStoredSession(nextSession) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    if (!nextSession?.token) {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+      return;
+    }
+
+    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
+  } catch {
+    // Local persistence is optional; auth state still lives in memory.
+  }
+}
 
 function buildCurrentUser(authUser) {
   if (!authUser) {
@@ -146,6 +171,11 @@ export function AuthProvider({ children }) {
   const setUser = (nextUser) => {
     setCurrentUser(nextUser);
     setUsers((previousUsers) => mergeUsers(previousUsers, nextUser));
+    setStoredSession({
+      ...(getStoredSession() ?? {}),
+      token,
+      user: nextUser,
+    });
   };
 
   useEffect(() => {
@@ -162,10 +192,22 @@ export function AuthProvider({ children }) {
       setToken(nextSession?.access_token ?? "");
       setCurrentUser(nextUser);
       setUsers((previousUsers) => mergeUsers(previousUsers, nextUser));
+      setStoredSession({
+        token: nextSession?.access_token ?? "",
+        user: nextUser,
+      });
       setLoading(false);
     };
 
     if (!supabase) {
+      const storedSession = getStoredSession();
+
+      if (storedSession?.user) {
+        setToken(storedSession.token ?? "");
+        setCurrentUser(storedSession.user);
+        setUsers((previousUsers) => mergeUsers(previousUsers, storedSession.user));
+      }
+
       setLoading(false);
       return undefined;
     }
@@ -203,6 +245,11 @@ export function AuthProvider({ children }) {
 
     if (selectedUser) {
       setCurrentUser(selectedUser);
+      setStoredSession({
+        ...(getStoredSession() ?? {}),
+        token,
+        user: selectedUser,
+      });
     }
   };
 
