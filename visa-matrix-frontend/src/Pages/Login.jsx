@@ -12,7 +12,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const redirectPath = location.state?.from?.pathname ?? "/customers";
+  const redirectPath = location.state?.from?.pathname ?? "/applications";
 
   // Redirect if already logged in
   if (!loading && currentUser) {

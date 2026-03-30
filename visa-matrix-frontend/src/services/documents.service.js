@@ -1,12 +1,5 @@
-import apiClient, { API_ENDPOINTS, extractResponseData } from "./apiClient";
-import {
-  getApplications as getFallbackApplications,
-  getChecklistCatalog,
-  getDocuments as getFallbackDocuments,
-  getVisaDocumentChecklists,
-} from "./mockApi";
-
-const cloneRows = (rows = []) => rows.map((row) => ({ ...row }));
+import { supabase } from "../supabase";
+import { getChecklistCatalog, getVisaDocumentChecklists } from "./mockApi";
 
 const normalizeDocument = (document = {}) => ({
   ...document,
@@ -24,19 +17,24 @@ const normalizeDocument = (document = {}) => ({
 
 export const fallbackChecklistCatalog = getChecklistCatalog();
 export const fallbackVisaDocumentChecklists = getVisaDocumentChecklists();
-export const fallbackApplications = getFallbackApplications();
 
-export async function fetchDocuments(fallbackData = getFallbackDocuments()) {
-  try {
-    const response = await apiClient.get(API_ENDPOINTS.documents);
-    const documents = extractResponseData(response);
-
-    return Array.isArray(documents) && documents.length > 0
-      ? documents.map(normalizeDocument)
-      : cloneRows(fallbackData);
-  } catch {
-    return cloneRows(fallbackData);
+function getDocumentsTable() {
+  if (!supabase) {
+    throw new Error("Supabase client is not configured.");
   }
+
+  return supabase.from("documents");
+}
+
+export async function fetchDocuments() {
+  const { data, error } = await getDocumentsTable().select("*");
+  console.log("Supabase documents response:", data);
+
+  if (error) {
+    throw error;
+  }
+
+  return Array.isArray(data) ? data.map(normalizeDocument) : [];
 }
 
 export function buildUploadedDocumentRows({
@@ -64,30 +62,19 @@ export async function uploadDocuments({
   uploadedBy,
   files = [],
 }) {
-  const fallbackDocuments = buildUploadedDocumentRows({
+  const nextDocuments = buildUploadedDocumentRows({
     applicationId,
     documentName,
     uploadedBy,
     files,
   });
 
-  try {
-    const formData = new FormData();
-    formData.append("applicationId", applicationId);
-    formData.append("documentName", documentName);
-    formData.append("uploadedBy", uploadedBy);
+  const { data, error } = await getDocumentsTable().insert(nextDocuments).select();
+  console.log("Supabase documents upload response:", data);
 
-    files.forEach((file) => {
-      formData.append("files", file);
-    });
-
-    const response = await apiClient.post(API_ENDPOINTS.documentsUpload, formData);
-    const documents = extractResponseData(response);
-
-    return Array.isArray(documents) && documents.length > 0
-      ? documents.map(normalizeDocument)
-      : fallbackDocuments;
-  } catch {
-    return fallbackDocuments;
+  if (error) {
+    throw error;
   }
+
+  return Array.isArray(data) ? data.map(normalizeDocument) : nextDocuments;
 }

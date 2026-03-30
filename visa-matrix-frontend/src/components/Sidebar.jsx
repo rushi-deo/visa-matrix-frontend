@@ -5,7 +5,6 @@ import { useAuth } from "../context/AuthContext";
 
 const primaryPaths = [
   "/dashboard",
-  "/crm",
   "/customers",
   "/applications",
   "/countries",
@@ -22,7 +21,6 @@ const primaryPaths = [
 
 const sidebarLabels = {
   "/dashboard": "Home",
-  "/crm": "CRM",
   "/customers": "Customers",
   "/applications": "Applications",
   "/countries": "Countries",
@@ -41,12 +39,6 @@ const menuIcons = {
   "/dashboard": (
     <svg viewBox="0 0 20 20" fill="none">
       <path d="M4 4.5h5v5H4zm7 0h5v7h-5zm-7 7h5v4H4zm7 2h5v2.5h-5z" />
-    </svg>
-  ),
-  "/crm": (
-    <svg viewBox="0 0 20 20" fill="none">
-      <path d="M10 10a3 3 0 100-6 3 3 0 000 6zm-5.5 5.5a5.5 5.5 0 0111 0" />
-      <path d="M15.5 6.5h2m-1-1v2" />
     </svg>
   ),
   "/customers": (

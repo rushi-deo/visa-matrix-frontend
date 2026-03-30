@@ -1,5 +1,5 @@
 import React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "../components/Modal";
 import PageHeader from "../components/PageHeader";
 import TablePagination from "../components/TablePagination";
@@ -7,8 +7,8 @@ import NewApplicationForm from "../forms/NewApplicationForm";
 import DashboardLayout from "../layout/DashboardLayout";
 import { useAuth } from "../context/AuthContext";
 import { useCountries } from "../hooks/useCountries";
-import { getLeads } from "../services/mockApi";
 import { getPageCount } from "../services/erpService";
+import { createLead, fetchLeads, updateLead } from "../services/leads.service";
 
 const emptyLead = {
   leadName: "",
@@ -24,7 +24,8 @@ const emptyLead = {
 export default function CRM() {
   const { countries } = useCountries();
   const { canAccess } = useAuth();
-  const [leads, setLeads] = useState(getLeads());
+  const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [page, setPage] = useState(1);
@@ -36,6 +37,26 @@ export default function CRM() {
   const [leadForm, setLeadForm] = useState(emptyLead);
   const [leadError, setLeadError] = useState("");
   const [activityMessage, setActivityMessage] = useState("");
+
+  const loadLeads = async () => {
+    setLoading(true);
+
+    try {
+      const nextLeads = await fetchLeads();
+      setLeads(nextLeads);
+      setLeadError("");
+    } catch (error) {
+      console.error("Failed to fetch leads:", error);
+      setLeads([]);
+      setLeadError(error.message ?? "Unable to load leads.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLeads();
+  }, []);
 
   const filteredLeads = leads.filter((lead) => {
     const matchesSearch = [
@@ -80,7 +101,7 @@ export default function CRM() {
     }));
   };
 
-  const handleLeadCreate = (event) => {
+  const handleLeadCreate = async (event) => {
     event.preventDefault();
 
     if (
@@ -94,62 +115,62 @@ export default function CRM() {
       return;
     }
 
-    setLeads((currentLeads) => [
-      {
+    try {
+      await createLead({
         ...leadForm,
-        id: `LEAD-${Date.now().toString().slice(-4)}`,
         consultationDate: "2026-03-23",
-      },
-      ...currentLeads,
-    ]);
-    setLeadForm(emptyLead);
-    setLeadError("");
-    setShowLeadModal(false);
-    setActivityMessage("New lead added to the CRM queue.");
-    setPage(1);
+      });
+      await loadLeads();
+      setLeadForm(emptyLead);
+      setLeadError("");
+      setShowLeadModal(false);
+      setActivityMessage("New lead added to the CRM queue.");
+      setPage(1);
+    } catch (error) {
+      console.error("Failed to create lead:", error);
+      setLeadError(error.message ?? "Unable to save lead.");
+    }
   };
 
-  const handleScheduleSubmit = (event) => {
+  const handleScheduleSubmit = async (event) => {
     event.preventDefault();
 
     if (!selectedLead || !scheduleState.date) {
       return;
     }
 
-    setLeads((currentLeads) =>
-      currentLeads.map((lead) =>
-        lead.id === selectedLead.id
-          ? {
-              ...lead,
-              consultationDate: scheduleState.date,
-              status: "Consultation Scheduled",
-            }
-          : lead,
-      ),
-    );
-    setActivityMessage(`Consultation scheduled for ${selectedLead.leadName}.`);
-    setShowScheduleModal(false);
+    try {
+      await updateLead(selectedLead.id, {
+        consultationDate: scheduleState.date,
+        status: "Consultation Scheduled",
+      });
+      await loadLeads();
+      setActivityMessage(`Consultation scheduled for ${selectedLead.leadName}.`);
+      setShowScheduleModal(false);
+    } catch (error) {
+      console.error("Failed to update lead schedule:", error);
+      setLeadError(error.message ?? "Unable to schedule consultation.");
+    }
   };
 
-  const handleConvertSubmit = (values) => {
+  const handleConvertSubmit = async (values) => {
     if (!selectedLead) {
       return;
     }
 
-    setLeads((currentLeads) =>
-      currentLeads.map((lead) =>
-        lead.id === selectedLead.id
-          ? {
-              ...lead,
-              status: "Converted",
-              interestedCountry: values.destinationCountry,
-              visaType: values.visaType,
-            }
-          : lead,
-      ),
-    );
-    setActivityMessage(`${selectedLead.leadName} converted into a draft application.`);
-    setShowConvertModal(false);
+    try {
+      await updateLead(selectedLead.id, {
+        status: "Converted",
+        interestedCountry: values.destinationCountry,
+        visaType: values.visaType,
+      });
+      await loadLeads();
+      setActivityMessage(`${selectedLead.leadName} converted into a draft application.`);
+      setShowConvertModal(false);
+    } catch (error) {
+      console.error("Failed to convert lead:", error);
+      setLeadError(error.message ?? "Unable to convert lead.");
+    }
   };
 
   return (
@@ -213,6 +234,10 @@ export default function CRM() {
             </select>
           </label>
         </div>
+
+        {loading ? <p className="empty-state">Loading leads...</p> : null}
+        {!loading && leadError ? <p className="form-error">{leadError}</p> : null}
+        {!loading && !leadError && filteredLeads.length === 0 ? <p className="empty-state">No Leads Found</p> : null}
 
         <TablePagination
           itemLabel="lead records"

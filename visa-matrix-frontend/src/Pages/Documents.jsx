@@ -7,13 +7,8 @@ import PageHeader from "../components/PageHeader";
 import StatusPill from "../components/StatusPill";
 import TablePagination from "../components/TablePagination";
 import DashboardLayout from "../layout/DashboardLayout";
-import {
-  getApplications,
-  getDocuments,
-} from "../services/mockApi";
 import { fetchApplications } from "../services/application.service";
 import {
-  buildUploadedDocumentRows,
   fallbackChecklistCatalog,
   fallbackVisaDocumentChecklists,
   fetchDocuments,
@@ -27,18 +22,17 @@ import {
 } from "../services/erpService";
 
 export default function Documents() {
-  const [applications, setApplications] = useState(getApplications());
-  const [documents, setDocuments] = useState(getDocuments());
+  const [applications, setApplications] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState("");
   const [applicationFilter, setApplicationFilter] = useState("All");
-  const [selectedApplicationId, setSelectedApplicationId] = useState(
-    applications[0]?.id ?? "",
-  );
+  const [selectedApplicationId, setSelectedApplicationId] = useState("");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [page, setPage] = useState(1);
   const [uploadFiles, setUploadFiles] = useState([]);
   const [uploadState, setUploadState] = useState({
-    applicationId: applications[0]?.id ?? "",
+    applicationId: "",
     uploadedBy: "Operations Team",
     documentName: "Passport",
   });
@@ -48,11 +42,14 @@ export default function Documents() {
     let isMounted = true;
 
     const loadPageData = async () => {
+      setLoading(true);
+
       try {
         const [nextApplications, nextDocuments] = await Promise.all([
-          fetchApplications(getApplications()),
-          fetchDocuments(getDocuments()),
+          fetchApplications(),
+          fetchDocuments(),
         ]);
+        console.log("Documents page data:", nextApplications, nextDocuments);
 
         if (!isMounted) {
           return;
@@ -74,8 +71,19 @@ export default function Documents() {
             nextApplications[0]?.id ??
             "",
         }));
-      } catch {
-        // Existing local fallback data keeps the page working if APIs fail.
+        setUploadError("");
+      } catch (error) {
+        console.error("Failed to load documents page data:", error);
+
+        if (isMounted) {
+          setApplications([]);
+          setDocuments([]);
+          setUploadError(error.message ?? "Unable to load documents.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -141,31 +149,22 @@ export default function Documents() {
     }
 
     try {
-      const newDocuments = await uploadDocuments({
+      await uploadDocuments({
         applicationId: uploadState.applicationId,
         documentName: uploadState.documentName,
         uploadedBy: uploadState.uploadedBy,
         files: uploadFiles,
       });
 
-      setDocuments((currentDocuments) => [...newDocuments, ...currentDocuments]);
+      const nextDocuments = await fetchDocuments();
+      setDocuments(nextDocuments);
       setUploadError("");
       setUploadFiles([]);
       setShowUploadModal(false);
       setPage(1);
-    } catch {
-      const fallbackDocuments = buildUploadedDocumentRows({
-        applicationId: uploadState.applicationId,
-        documentName: uploadState.documentName,
-        uploadedBy: uploadState.uploadedBy,
-        files: uploadFiles,
-      });
-
-      setDocuments((currentDocuments) => [...fallbackDocuments, ...currentDocuments]);
-      setUploadError("");
-      setUploadFiles([]);
-      setShowUploadModal(false);
-      setPage(1);
+    } catch (error) {
+      console.error("Failed to upload documents:", error);
+      setUploadError(error.message ?? "Unable to upload documents.");
     }
   };
 
@@ -317,10 +316,12 @@ export default function Documents() {
         <DataTable
           caption="Document table"
           columns={columns}
-          emptyMessage="No documents match the current filters."
+          emptyMessage={loading ? "Loading documents..." : "No documents match the current filters."}
           rowKey="id"
           rows={visibleDocuments}
         />
+
+        {uploadError && !showUploadModal ? <p className="form-error">{uploadError}</p> : null}
 
         <TablePagination
           itemLabel="documents"

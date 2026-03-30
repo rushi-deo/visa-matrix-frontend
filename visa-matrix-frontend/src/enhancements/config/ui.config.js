@@ -11,7 +11,7 @@ export const GROUPED_SIDEBAR_CONFIG = [
   {
     id: "operations",
     label: "Operations",
-    items: ["/crm", "/customers", "/applications", "/documents", "/tasks"],
+    items: ["/customers", "/applications", "/documents", "/tasks"],
   },
   {
     id: "finance",

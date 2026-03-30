@@ -1,18 +1,62 @@
 import React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DataTable from "../components/DataTable";
 import PageHeader from "../components/PageHeader";
 import StatCard from "../components/StatCard";
 import TablePagination from "../components/TablePagination";
 import DashboardLayout from "../layout/DashboardLayout";
-import { getCustomers } from "../services/mockApi";
+import { fetchCustomers } from "../services/customers.service";
 import { getPageCount, paginateRows } from "../services/erpService";
 
 export default function Customers() {
-  const [customers] = useState(getCustomers());
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [page, setPage] = useState(1);
-  const [selectedCustomerId, setSelectedCustomerId] = useState(customers[0]?.id ?? "");
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCustomers = async () => {
+      setLoading(true);
+
+      try {
+        const nextCustomers = await fetchCustomers();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setCustomers(nextCustomers);
+        setSelectedCustomerId((currentId) =>
+          nextCustomers.some((customer) => customer.id === currentId)
+            ? currentId
+            : nextCustomers[0]?.id ?? "",
+        );
+        setError("");
+      } catch (loadError) {
+        console.error("Failed to fetch customers:", loadError);
+
+        if (isMounted) {
+          setCustomers([]);
+          setSelectedCustomerId("");
+          setError(loadError.message ?? "Unable to load customers.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCustomers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filteredCustomers = customers.filter((customer) =>
     [
@@ -53,7 +97,7 @@ export default function Customers() {
   ];
 
   const totalDocuments = customers.reduce(
-    (sum, customer) => sum + customer.documentsUploaded.length,
+    (sum, customer) => sum + (customer.documentsUploaded?.length ?? 0),
     0,
   );
 
@@ -99,7 +143,7 @@ export default function Customers() {
           <DataTable
             caption="Customer directory"
             columns={columns}
-            emptyMessage="No customers match the current search."
+            emptyMessage={loading ? "Loading customers..." : "No customers match the current search."}
             rowKey="id"
             rows={visibleCustomers}
           />
@@ -148,7 +192,7 @@ export default function Customers() {
             <div>
               <span className="profile-card__eyebrow">Visa History</span>
               <div className="tag-list">
-                {selectedCustomer?.visaHistory.map((item) => (
+                {(selectedCustomer?.visaHistory ?? []).map((item) => (
                   <span className="tag" key={item}>
                     {item}
                   </span>
@@ -159,7 +203,7 @@ export default function Customers() {
             <div>
               <span className="profile-card__eyebrow">Documents Uploaded</span>
               <div className="tag-list">
-                {selectedCustomer?.documentsUploaded.map((item) => (
+                {(selectedCustomer?.documentsUploaded ?? []).map((item) => (
                   <span className="tag" key={item}>
                     {item}
                   </span>
@@ -179,6 +223,7 @@ export default function Customers() {
           </article>
         </div>
       </section>
+      {error ? <p className="form-error">{error}</p> : null}
     </DashboardLayout>
   );
 }

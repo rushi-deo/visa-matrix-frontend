@@ -16,11 +16,7 @@ import {
   updateApplication as updateApplicationRequest,
 } from "../services/application.service";
 import { fetchDocuments } from "../services/documents.service";
-import {
-  getApplications,
-  getDocuments,
-  getVisaDocumentChecklists,
-} from "../services/mockApi";
+import { getVisaDocumentChecklists } from "../services/mockApi";
 import {
   buildApplicationFromForm,
   formatDate,
@@ -42,9 +38,10 @@ export default function Applications() {
   const { currentUser, canAccess } = useAuth();
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState("");
-  const [applications, setApplications] = useState(getApplications());
-  const [documents, setDocuments] = useState(getDocuments());
+  const [applications, setApplications] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [page, setPage] = useState(1);
@@ -80,11 +77,14 @@ export default function Applications() {
     };
 
     const loadPageData = async () => {
+      setPageLoading(true);
+
       try {
         const [nextApplications, nextDocuments] = await Promise.all([
-          fetchApplications(getApplications()),
-          fetchDocuments(getDocuments()),
+          fetchApplications(),
+          fetchDocuments(),
         ]);
+        console.log("Applications page data:", nextApplications, nextDocuments);
 
         if (!isMounted) {
           return;
@@ -100,6 +100,11 @@ export default function Applications() {
       } catch {
         if (isMounted) {
           setSelectedApplicationId((currentId) => currentId || applications[0]?.id || "");
+          setError("Unable to load applications from Supabase.");
+        }
+      } finally {
+        if (isMounted) {
+          setPageLoading(false);
         }
       }
     };
@@ -198,7 +203,6 @@ export default function Applications() {
           stage: nextApplication.stage,
           status: nextApplication.status,
         },
-        nextApplication,
       );
 
       setApplications((currentApplications) =>
@@ -229,7 +233,6 @@ export default function Applications() {
 
     try {
       const persistedApplication = await createApplicationRequest(
-        newApplication,
         newApplication,
       );
 
@@ -348,10 +351,12 @@ export default function Applications() {
               ),
             },
           ]}
-          emptyMessage="No applications match the current filters."
+          emptyMessage={pageLoading ? "Loading applications..." : "No applications match the current filters."}
           rowKey="id"
           rows={visibleApplications}
         />
+
+        {error && !showNewModal ? <p className="form-error">{error}</p> : null}
 
         <TablePagination
           itemLabel="applications"

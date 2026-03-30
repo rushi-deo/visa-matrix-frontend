@@ -1,56 +1,65 @@
-import apiClient, { API_ENDPOINTS, extractResponseData } from "./apiClient";
-import { getApplications as getFallbackApplications } from "./mockApi";
-
-const cloneRows = (rows = []) => rows.map((row) => ({ ...row }));
+import { supabase } from "../supabase";
 
 const normalizeApplication = (application = {}) => ({
   ...application,
   id: application.id ?? application.application_id ?? "",
+  customerName: application.customerName ?? application.customer_name ?? "",
+  destinationCountry:
+    application.destinationCountry ?? application.destination_country ?? "",
+  visaType: application.visaType ?? application.visa_type ?? "",
+  assignedAgent: application.assignedAgent ?? application.assigned_agent ?? "",
+  submissionDate:
+    application.submissionDate ??
+    application.submission_date ??
+    new Date().toISOString().slice(0, 10),
 });
 
-export async function fetchApplications(fallbackData = getFallbackApplications()) {
-  try {
-    const response = await apiClient.get(API_ENDPOINTS.applications);
-    const applications = extractResponseData(response);
-
-    return Array.isArray(applications) && applications.length > 0
-      ? applications.map(normalizeApplication)
-      : cloneRows(fallbackData);
-  } catch {
-    return cloneRows(fallbackData);
+function getApplicationsTable() {
+  if (!supabase) {
+    throw new Error("Supabase client is not configured.");
   }
+
+  return supabase.from("applications");
+}
+
+export async function fetchApplications() {
+  const { data, error } = await getApplicationsTable().select("*");
+  console.log("Supabase applications response:", data);
+
+  if (error) {
+    throw error;
+  }
+
+  return Array.isArray(data) ? data.map(normalizeApplication) : [];
 }
 
 export async function createApplication(
   payload,
-  fallbackApplication = payload,
 ) {
-  try {
-    const response = await apiClient.post(API_ENDPOINTS.applications, payload);
-    const application = extractResponseData(response);
+  const { data, error } = await getApplicationsTable().insert(payload).select().single();
+  console.log("Supabase application create response:", data);
 
-    return application ? normalizeApplication(application) : { ...fallbackApplication };
-  } catch {
-    return { ...fallbackApplication };
+  if (error) {
+    throw error;
   }
+
+  return normalizeApplication(data);
 }
 
 export async function updateApplication(
   applicationId,
   payload,
-  fallbackApplication,
 ) {
-  try {
-    const response = await apiClient.patch(
-      API_ENDPOINTS.applicationById(applicationId),
-      payload,
-    );
-    const application = extractResponseData(response);
+  const { data, error } = await getApplicationsTable()
+    .update(payload)
+    .eq("id", applicationId)
+    .select()
+    .single();
+  console.log("Supabase application update response:", data);
 
-    return application
-      ? normalizeApplication(application)
-      : { ...fallbackApplication, ...payload };
-  } catch {
-    return { ...fallbackApplication, ...payload };
+  if (error) {
+    throw error;
   }
+
+  return normalizeApplication(data);
 }

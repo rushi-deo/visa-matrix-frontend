@@ -1,6 +1,5 @@
 export const navigationItems = [
   { label: "Dashboard", path: "/dashboard", shortLabel: "Dashboard" },
-  { label: "CRM", path: "/crm", shortLabel: "CRM" },
   { label: "Customers", path: "/customers", shortLabel: "Customers" },
   {
     label: "Visa Applications",

@@ -1,13 +1,12 @@
 import React from "react";
 import { useEffect } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import Admin from "./Pages/Admin";
 import Applications from "./Pages/Applications";
 import AuditLogs from "./Pages/AuditLogs";
-import CRM from "./Pages/CRM";
 import Communication from "./Pages/Communication";
 import Countries from "./Pages/Countries";
 import Customers from "./Pages/Customers";
@@ -51,7 +50,15 @@ export default function App() {
             path="/crm"
             element={
               <ProtectedRoute>
-                <CRM />
+                <Navigate replace to="/applications" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leads"
+            element={
+              <ProtectedRoute>
+                <Navigate replace to="/applications" />
               </ProtectedRoute>
             }
           />

@@ -9,7 +9,6 @@ import { searchWorkspace } from "../services/search.service";
 const defaultTitle = "Home";
 const pageTitles = {
   "/dashboard": "Home",
-  "/crm": "CRM / Leads",
   "/customers": "Customers",
   "/applications": "Applications",
   "/countries": "Countries",
@@ -56,6 +55,10 @@ export default function TopNavbar() {
         (notification) => !(notification.is_read ?? notification.read_status ?? false),
       ).length,
     [notifications],
+  );
+  const visibleSearchResults = useMemo(
+    () => searchResults.filter((result) => result.path !== "/crm" && result.type !== "lead"),
+    [searchResults],
   );
 
   useEffect(() => {
@@ -177,12 +180,12 @@ export default function TopNavbar() {
                 }
               }}
               onKeyDown={(event) => {
-                if (event.key === "Enter" && searchResults[0]?.path) {
+                if (event.key === "Enter" && visibleSearchResults[0]?.path) {
                   event.preventDefault();
-                  handleSearchSelect(searchResults[0].path);
+                  handleSearchSelect(visibleSearchResults[0].path);
                 }
               }}
-              placeholder="Search leads, customers, applications, documents"
+              placeholder="Search customers, applications, documents"
               value={searchValue}
             />
           </div>
@@ -203,8 +206,8 @@ export default function TopNavbar() {
             >
               {searchLoading ? (
                 <div style={{ padding: "12px 14px", color: "#64748b" }}>Searching workspace...</div>
-              ) : searchResults.length > 0 ? (
-                searchResults.map((result) => (
+              ) : visibleSearchResults.length > 0 ? (
+                visibleSearchResults.map((result) => (
                   <button
                     key={result.id}
                     type="button"
