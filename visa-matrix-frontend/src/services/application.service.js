@@ -3,6 +3,8 @@ import { supabase } from "../supabase";
 const normalizeApplication = (application = {}) => ({
   ...application,
   id: application.id ?? application.application_id ?? "",
+  applicationCode:
+    application.applicationCode ?? application.application_code ?? "",
   customerName: application.customerName ?? application.customer_name ?? "",
   destinationCountry:
     application.destinationCountry ?? application.destination_country ?? "",
@@ -22,6 +24,8 @@ const compactPayload = (payload = {}) =>
 const mapApplicationToDbPayload = (application = {}) =>
   compactPayload({
     id: application.id,
+    application_code:
+      application.applicationCode ?? application.application_code,
     customer_name: application.customerName ?? application.customer_name,
     passport_number: application.passportNumber ?? application.passport_number,
     email: application.email,
@@ -51,6 +55,15 @@ function getApplicationsTable() {
   return supabase.from("applications");
 }
 
+export function generateApplicationCode(count) {
+  const now = new Date();
+  const monthLetters = "ABCDEFGHIJKL";
+  const monthLetter = monthLetters[now.getMonth()];
+  const year = now.getFullYear().toString().slice(-2);
+
+  return `VM${count}${monthLetter}${year}`;
+}
+
 export async function fetchApplications() {
   const { data, error } = await getApplicationsTable()
     .select("*")
@@ -73,45 +86,66 @@ export async function createApplication(
     throw new Error("Supabase client is not configured.");
   }
 
-  const {
-    data: authData,
-    error: authError,
-  } = await supabase.auth.getUser();
+  let authData = null;
+  let authUserId = null;
+
+  const { data: nextAuthData, error: authError } = await supabase.auth.getUser();
 
   if (authError) {
     console.error("Supabase auth user lookup error:", authError);
-    throw authError;
+  } else {
+    authData = nextAuthData;
+    authUserId = nextAuthData?.user?.id ?? null;
   }
 
   console.log("Current User:", authData);
-
-  if (!authData?.user?.id) {
-    throw new Error("Authenticated user is required before inserting applications.");
-  }
 
   const insertPayload = compactPayload({
     ...mapApplicationToDbPayload(payload),
     created_by:
       payload.created_by ??
       payload.user_id ??
-      currentUser?.id ??
-      authData.user.id,
+      authUserId ??
+      null,
     organization_id:
       payload.organization_id ??
       currentUser?.organization_id ??
-      authData.user.user_metadata?.organization_id,
+      authData?.user?.user_metadata?.organization_id,
     created_at: payload.created_at ?? new Date().toISOString(),
   });
 
   console.log("Payload:", insertPayload);
 
+  const { count, error: countError } = await getApplicationsTable().select("*", {
+    count: "exact",
+    head: true,
+  });
+
+  if (countError) {
+    console.error("Supabase applications count error:", countError);
+    throw countError;
+  }
+
+  const nextCount = (count || 0) + 1;
+  const applicationCode = generateApplicationCode(nextCount);
+
+  console.log("Generated Application Code:", applicationCode);
+
   const { data, error } = await getApplicationsTable()
-    .insert([insertPayload])
+    .insert([
+      {
+        ...insertPayload,
+        application_code: applicationCode,
+      },
+    ])
     .select()
     .single();
 
   if (error) {
-    console.error("Insert Error:", error.message, error.details, error.hint, insertPayload);
+    console.error("Insert Error:", error.message, error.details, error.hint, {
+      ...insertPayload,
+      application_code: applicationCode,
+    });
     throw error;
   }
 

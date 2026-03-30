@@ -4,12 +4,17 @@ import { getChecklistCatalog, getVisaDocumentChecklists } from "./mockApi";
 const normalizeDocument = (document = {}) => ({
   ...document,
   id: document.id ?? document.document_id ?? `DOC-${Date.now()}`,
-  documentName: document.documentName ?? document.document_name ?? "Document",
+  documentName:
+    document.documentName ??
+    document.document_name ??
+    document.type ??
+    "Document",
   applicationId: document.applicationId ?? document.application_id ?? "",
   uploadedBy: document.uploadedBy ?? document.uploaded_by ?? "Operations Team",
   uploadDate:
     document.uploadDate ??
     document.upload_date ??
+    document.uploaded_at ??
     new Date().toISOString().slice(0, 10),
   fileName: document.fileName ?? document.file_name ?? "file",
   fileType: document.fileType ?? document.file_type ?? "FILE",
@@ -26,15 +31,35 @@ function getDocumentsTable() {
   return supabase.from("documents");
 }
 
-export async function fetchDocuments() {
-  const { data, error } = await getDocumentsTable().select("*");
-  console.log("Supabase documents response:", data);
+export async function fetchDocuments(options = {}) {
+  const includeMeta =
+    options &&
+    typeof options === "object" &&
+    !Array.isArray(options) &&
+    options.includeMeta === true;
 
-  if (error) {
-    throw error;
+  try {
+    const { data, error } = await supabase
+      .from("documents")
+      .select("*");
+
+    if (error) {
+      console.error("Documents fetch error:", error);
+      return includeMeta ? { data: [], error } : [];
+    }
+
+    const normalizedDocuments = Array.isArray(data)
+      ? data.map(normalizeDocument)
+      : [];
+
+    console.log("Documents:", normalizedDocuments);
+    return includeMeta
+      ? { data: normalizedDocuments, error: null }
+      : normalizedDocuments;
+  } catch (error) {
+    console.error("Documents fetch error:", error);
+    return includeMeta ? { data: [], error } : [];
   }
-
-  return Array.isArray(data) ? data.map(normalizeDocument) : [];
 }
 
 export function buildUploadedDocumentRows({

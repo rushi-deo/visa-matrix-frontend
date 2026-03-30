@@ -49,10 +49,12 @@ export default function Applications() {
   const [selectedApplicationId, setSelectedApplicationId] = useState(
     applications[0]?.id ?? "",
   );
+  const getApplicationDisplayId = (application) =>
+    application?.applicationCode || application?.id || "";
 
   const loadApplications = async (preferredApplicationId = "") => {
     const nextApplications = await fetchApplications();
-    console.log("Applications refreshed from Supabase:", nextApplications);
+    console.log("Applications:", nextApplications);
     setApplications(nextApplications);
     setSelectedApplicationId((currentId) => {
       const nextSelectedId = preferredApplicationId || currentId;
@@ -71,11 +73,9 @@ export default function Applications() {
     let isMounted = true;
 
     const loadCountries = async () => {
-      setLoading(true);
-      setError("");
-
       try {
         const nextCountries = await fetchCountries();
+        console.log("Countries:", nextCountries);
 
         if (isMounted) {
           setCountries(Array.isArray(nextCountries) ? nextCountries : []);
@@ -84,7 +84,7 @@ export default function Applications() {
         console.error("Failed to fetch countries:", loadError);
 
         if (isMounted) {
-          setError(loadError.message ?? "Failed to load countries.");
+          setCountries([]);
         }
       } finally {
         if (isMounted) {
@@ -93,42 +93,60 @@ export default function Applications() {
       }
     };
 
+    const loadDocuments = async () => {
+      const { data: nextDocuments } = await fetchDocuments({
+        includeMeta: true,
+      });
+
+      if (!isMounted) {
+        return;
+      }
+
+      console.log("Documents:", nextDocuments);
+      setDocuments(nextDocuments);
+    };
+
     const loadPageData = async () => {
+      setLoading(true);
       setPageLoading(true);
+      setError("");
 
       try {
-        const [nextApplications, nextDocuments] = await Promise.all([
-          fetchApplications(),
-          fetchDocuments(),
-        ]);
-        console.log("Applications page data:", nextApplications, nextDocuments);
+        const nextApplications = await fetchApplications();
+        console.log("Applications:", nextApplications);
 
         if (!isMounted) {
           return;
         }
 
         setApplications(nextApplications);
-        setDocuments(nextDocuments);
         setSelectedApplicationId((currentId) =>
           nextApplications.some((application) => application.id === currentId)
             ? currentId
             : nextApplications[0]?.id ?? "",
         );
+        setPageLoading(false);
+
+        loadDocuments();
+        loadCountries();
       } catch (loadError) {
-        console.error("Failed to load applications page data:", loadError);
+        console.error("Failed to load applications:", loadError);
 
         if (isMounted) {
-          setSelectedApplicationId((currentId) => currentId || applications[0]?.id || "");
+          setApplications([]);
+          setDocuments([]);
+          setCountries([]);
+          setSelectedApplicationId("");
           setError(loadError.message ?? "Unable to load applications from Supabase.");
         }
       } finally {
         if (isMounted) {
           setPageLoading(false);
+          setLoading(false);
         }
       }
     };
 
-    loadCountries();
     loadPageData();
 
     return () => {
@@ -156,6 +174,7 @@ export default function Applications() {
   const filteredApplications = scopedApplications.filter((application) => {
     const matchesSearch = [
       application.id,
+      application.applicationCode,
       application.customerName,
       application.destinationCountry,
       application.visaType,
@@ -259,10 +278,7 @@ export default function Applications() {
     }
   };
 
-  console.log("Countries from API:", countries);
-
   const finalCountries = countries && countries.length > 0 ? countries : fallbackCountries;
-  console.log("Final countries used:", finalCountries.length);
   const countryOptions = finalCountries
     .map((country) => ({
       code: country.code ?? country.country_code ?? country.name ?? country.country,
@@ -333,7 +349,11 @@ export default function Applications() {
         <DataTable
           caption="Visa applications"
           columns={[
-            { key: "id", label: "Application ID" },
+            {
+              key: "id",
+              label: "Application ID",
+              render: (row) => getApplicationDisplayId(row),
+            },
             { key: "customerName", label: "Customer Name" },
             { key: "destinationCountry", label: "Destination Country" },
             { key: "visaType", label: "Visa Type" },
@@ -364,7 +384,6 @@ export default function Applications() {
         />
 
         {error && !showNewModal ? <p className="form-error">{error}</p> : null}
-
         <TablePagination
           itemLabel="applications"
           onNext={() => setPage((currentPage) => Math.min(pageCount, currentPage + 1))}
@@ -389,7 +408,7 @@ export default function Applications() {
               <dl className="detail-list">
                 <div>
                   <dt>Application ID</dt>
-                  <dd>{selectedApplication.id}</dd>
+                  <dd>{getApplicationDisplayId(selectedApplication)}</dd>
                 </div>
                 <div>
                   <dt>Customer Name</dt>
@@ -526,7 +545,7 @@ export default function Applications() {
         {loading ? <p>Loading...</p> : null}
         {error ? <p className="form-error">{error}</p> : null}
         <NewApplicationForm
-          countries={countries}
+          countries={finalCountries}
           countryOptions={countryOptions}
           onSubmit={handleCreateApplication}
           submitLabel="Submit"
