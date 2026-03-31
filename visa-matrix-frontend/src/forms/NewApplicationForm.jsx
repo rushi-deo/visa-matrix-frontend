@@ -11,7 +11,7 @@ const createInitialState = (initialValues = {}) => ({
   visaType: initialValues.visaType ?? "",
   travelDate: initialValues.travelDate ?? "",
   agentAssigned: initialValues.agentAssigned ?? initialValues.assignedAgent ?? "",
-  notes: initialValues.notes ?? "",
+  leadSource: initialValues.leadSource ?? initialValues.lead_source ?? "",
 });
 
 export default function NewApplicationForm({
@@ -228,12 +228,13 @@ export default function NewApplicationForm({
         </label>
 
         <label className="field field--full">
-          <span>Notes</span>
-          <textarea
-            name="notes"
+          <span>Lead Source</span>
+          <input
+            name="leadSource"
             onChange={handleChange}
-            placeholder="Add case notes"
-            value={values.notes}
+            placeholder="Enter lead source (e.g., Instagram, Referral, Walk-in)"
+            type="text"
+            value={values.leadSource}
           />
         </label>
       </div>

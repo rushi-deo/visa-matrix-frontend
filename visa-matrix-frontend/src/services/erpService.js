@@ -182,11 +182,10 @@ export const buildApplicationFromForm = (values) => ({
   visaType: values.visaType,
   travelDate: values.travelDate,
   assignedAgent: values.agentAssigned,
-  leadSource: values.leadSource ?? "Manual",
+  leadSource: values.leadSource?.trim() || null,
   stage: "Lead",
   status: "Draft",
   submissionDate: new Date().toISOString().slice(0, 10),
-  notes: values.notes,
   embassyInterviewDate: values.travelDate,
 });
 

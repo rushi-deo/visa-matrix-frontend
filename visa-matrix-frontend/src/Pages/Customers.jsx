@@ -5,7 +5,7 @@ import PageHeader from "../components/PageHeader";
 import StatCard from "../components/StatCard";
 import TablePagination from "../components/TablePagination";
 import DashboardLayout from "../layout/DashboardLayout";
-import { fetchCustomers } from "../services/customers.service";
+import { fetchCustomers } from "../services/api";
 import { getPageCount, paginateRows } from "../services/erpService";
 
 export default function Customers() {
@@ -21,34 +21,20 @@ export default function Customers() {
 
     const loadCustomers = async () => {
       setLoading(true);
+      const nextCustomers = await fetchCustomers();
 
-      try {
-        const nextCustomers = await fetchCustomers();
-
-        if (!isMounted) {
-          return;
-        }
-
-        setCustomers(nextCustomers);
-        setSelectedCustomerId((currentId) =>
-          nextCustomers.some((customer) => customer.id === currentId)
-            ? currentId
-            : nextCustomers[0]?.id ?? "",
-        );
-        setError("");
-      } catch (loadError) {
-        console.error("Failed to fetch customers:", loadError);
-
-        if (isMounted) {
-          setCustomers([]);
-          setSelectedCustomerId("");
-          setError(loadError.message ?? "Unable to load customers.");
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+      if (!isMounted) {
+        return;
       }
+
+      setCustomers(nextCustomers);
+      setSelectedCustomerId((currentId) =>
+        nextCustomers.some((customer) => customer.id === currentId)
+          ? currentId
+          : nextCustomers[0]?.id ?? "",
+      );
+      setError("");
+      setLoading(false);
     };
 
     loadCustomers();

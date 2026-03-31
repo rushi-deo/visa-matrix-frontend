@@ -14,7 +14,6 @@ export const applications = [
     stage: "Embassy Processing",
     status: "Embassy Processing",
     submissionDate: "2026-03-12",
-    notes: "Biometrics completed. Waiting on final medical acknowledgement.",
     embassyInterviewDate: "2026-03-24",
   },
   {
@@ -32,7 +31,6 @@ export const applications = [
     stage: "Visa Approved / Rejected",
     status: "Approved",
     submissionDate: "2026-03-10",
-    notes: "Grant letter issued. Post-landing advisory shared with customer.",
     embassyInterviewDate: "2026-03-15",
   },
   {
@@ -50,7 +48,6 @@ export const applications = [
     stage: "Document Collection",
     status: "Documents Pending",
     submissionDate: "2026-03-09",
-    notes: "Awaiting invitation letter and updated financial proof.",
     embassyInterviewDate: "2026-03-28",
   },
   {
@@ -68,7 +65,6 @@ export const applications = [
     stage: "Application Filing",
     status: "Filed",
     submissionDate: "2026-03-07",
-    notes: "Application lodged and acknowledgement received from consulate.",
     embassyInterviewDate: "2026-03-22",
   },
   {
@@ -86,7 +82,6 @@ export const applications = [
     stage: "Consultation",
     status: "Draft",
     submissionDate: "2026-03-05",
-    notes: "Consultation completed. DS forms pending executive signature.",
     embassyInterviewDate: "2026-04-02",
   },
   {
@@ -104,7 +99,6 @@ export const applications = [
     stage: "Visa Approved / Rejected",
     status: "Approved",
     submissionDate: "2026-03-03",
-    notes: "Residence visa stamped. Emirates ID onboarding in progress.",
     embassyInterviewDate: "2026-03-11",
   },
   {
@@ -122,7 +116,6 @@ export const applications = [
     stage: "Document Collection",
     status: "Documents Pending",
     submissionDate: "2026-03-01",
-    notes: "Waiting for revised itinerary and latest bank statement.",
     embassyInterviewDate: "2026-03-29",
   },
   {
@@ -140,7 +133,6 @@ export const applications = [
     stage: "Visa Approved / Rejected",
     status: "Rejected",
     submissionDate: "2026-02-28",
-    notes: "Employer quota issue. Refiling strategy under review.",
     embassyInterviewDate: "2026-03-04",
   },
 ];

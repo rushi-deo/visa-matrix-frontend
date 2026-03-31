@@ -8,7 +8,8 @@ import DashboardLayout from "../layout/DashboardLayout";
 import { useAuth } from "../context/AuthContext";
 import { useCountries } from "../hooks/useCountries";
 import { getPageCount } from "../services/erpService";
-import { createLead, fetchLeads, updateLead } from "../services/leads.service";
+import { fetchLeads } from "../services/api";
+import { createLead, updateLead } from "../services/leads.service";
 
 const emptyLead = {
   leadName: "",
@@ -40,18 +41,10 @@ export default function CRM() {
 
   const loadLeads = async () => {
     setLoading(true);
-
-    try {
-      const nextLeads = await fetchLeads();
-      setLeads(nextLeads);
-      setLeadError("");
-    } catch (error) {
-      console.error("Failed to fetch leads:", error);
-      setLeads([]);
-      setLeadError(error.message ?? "Unable to load leads.");
-    } finally {
-      setLoading(false);
-    }
+    const nextLeads = await fetchLeads();
+    setLeads(nextLeads);
+    setLeadError("");
+    setLoading(false);
   };
 
   useEffect(() => {

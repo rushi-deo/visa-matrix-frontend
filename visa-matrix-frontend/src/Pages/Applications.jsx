@@ -178,6 +178,7 @@ export default function Applications() {
       application.customerName,
       application.destinationCountry,
       application.visaType,
+      application.leadSource,
       application.assignedAgent,
     ]
       .join(" ")
@@ -357,6 +358,7 @@ export default function Applications() {
             { key: "customerName", label: "Customer Name" },
             { key: "destinationCountry", label: "Destination Country" },
             { key: "visaType", label: "Visa Type" },
+            { key: "leadSource", label: "Lead Source" },
             {
               key: "status",
               label: "Status",
@@ -425,6 +427,10 @@ export default function Applications() {
                 <div>
                   <dt>Assigned Agent</dt>
                   <dd>{selectedApplication.assignedAgent}</dd>
+                </div>
+                <div>
+                  <dt>Lead Source</dt>
+                  <dd>{selectedApplication.leadSource || "Not provided"}</dd>
                 </div>
                 <div>
                   <dt>Submission Date</dt>

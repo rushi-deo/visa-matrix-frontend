@@ -5,6 +5,7 @@ const normalizeApplication = (application = {}) => ({
   id: application.id ?? application.application_id ?? "",
   applicationCode:
     application.applicationCode ?? application.application_code ?? "",
+  leadSource: application.leadSource ?? application.lead_source ?? "",
   customerName: application.customerName ?? application.customer_name ?? "",
   destinationCountry:
     application.destinationCountry ?? application.destination_country ?? "",
@@ -34,12 +35,11 @@ const mapApplicationToDbPayload = (application = {}) =>
       application.destinationCountry ?? application.destination_country,
     visa_type: application.visaType ?? application.visa_type,
     travel_date: application.travelDate ?? application.travel_date,
-    assigned_agent: application.assignedAgent ?? application.assigned_agent,
+    assigned_to: application.assignedAgent || application.assigned_agent || null,
     lead_source: application.leadSource ?? application.lead_source,
     stage: application.stage,
     status: application.status,
     submission_date: application.submissionDate ?? application.submission_date,
-    notes: application.notes,
     embassy_interview_date:
       application.embassyInterviewDate ?? application.embassy_interview_date,
     organization_id: application.organization_id,
