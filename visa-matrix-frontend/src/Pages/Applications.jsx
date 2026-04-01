@@ -264,7 +264,11 @@ export default function Applications() {
       return;
     }
 
-    const newApplication = buildApplicationFromForm(values);
+    const builtApplication = buildApplicationFromForm(values);
+    const newApplication = {
+      ...builtApplication,
+      assigned_to: builtApplication.assignedAgent || null,
+    };
 
     try {
       const persistedApplication = await createApplicationRequest(newApplication, currentUser);

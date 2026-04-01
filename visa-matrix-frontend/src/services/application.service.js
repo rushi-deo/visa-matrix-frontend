@@ -4,7 +4,10 @@ const normalizeApplication = (application = {}) => ({
   ...application,
   id: application.id ?? application.application_id ?? "",
   applicationCode:
-    application.applicationCode ?? application.application_code ?? "",
+    application.applicationCode ??
+    application.application_number ??
+    application.application_code ??
+    "",
   leadSource: application.leadSource ?? application.lead_source ?? "",
   customerName: application.customerName ?? application.customer_name ?? "",
   destinationCountry:
@@ -24,9 +27,10 @@ const compactPayload = (payload = {}) =>
 
 const mapApplicationToDbPayload = (application = {}) =>
   compactPayload({
-    id: application.id,
-    application_code:
-      application.applicationCode ?? application.application_code,
+    application_number:
+      application.applicationCode ??
+      application.application_number ??
+      application.application_code,
     customer_name: application.customerName ?? application.customer_name,
     passport_number: application.passportNumber ?? application.passport_number,
     email: application.email,
@@ -135,7 +139,7 @@ export async function createApplication(
     .insert([
       {
         ...insertPayload,
-        application_code: applicationCode,
+        application_number: applicationCode,
       },
     ])
     .select()
@@ -144,7 +148,7 @@ export async function createApplication(
   if (error) {
     console.error("Insert Error:", error.message, error.details, error.hint, {
       ...insertPayload,
-      application_code: applicationCode,
+      application_number: applicationCode,
     });
     throw error;
   }
