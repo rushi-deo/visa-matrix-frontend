@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import DataTable from "../components/DataTable";
 import Modal from "../components/Modal";
 import PageHeader from "../components/PageHeader";
+import QuotationTemplate from "../components/QuotationTemplate";
 import StatusPill from "../components/StatusPill";
 import TablePagination from "../components/TablePagination";
 import NewApplicationForm from "../forms/NewApplicationForm";
@@ -46,6 +47,9 @@ export default function Applications() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [page, setPage] = useState(1);
   const [showNewModal, setShowNewModal] = useState(false);
+  const [showQuotation, setShowQuotation] = useState(false);
+  const [selectedQuotationApplication, setSelectedQuotationApplication] = useState(null);
+  const [quotationApplication, setQuotationApplication] = useState(null);
   const [selectedApplicationId, setSelectedApplicationId] = useState(
     applications[0]?.id ?? "",
   );
@@ -153,6 +157,12 @@ export default function Applications() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    setShowQuotation(false);
+    setSelectedQuotationApplication(null);
+    setQuotationApplication(null);
+  }, [selectedApplicationId]);
 
   const scopedApplications = useMemo(() => {
     const normalizedApplications = applications.map(normalizeApplicationWorkflow);
@@ -406,7 +416,22 @@ export default function Applications() {
               <h3>Application Workflow</h3>
               <p>Each workflow stage updates the application status automatically.</p>
             </div>
-            {selectedApplication ? <StatusPill label={selectedApplication.status} /> : null}
+            {selectedApplication ? (
+              <div className="button-row">
+                <button
+                  className="secondary-button"
+                  onClick={() => {
+                    setSelectedQuotationApplication(selectedApplication);
+                    setQuotationApplication(selectedApplication);
+                    setShowQuotation(true);
+                  }}
+                  type="button"
+                >
+                  Send Quotation
+                </button>
+                <StatusPill label={selectedApplication.status} />
+              </div>
+            ) : null}
           </div>
 
           {selectedApplication ? (
@@ -509,46 +534,69 @@ export default function Applications() {
           )}
         </article>
 
-        <article className="panel">
-          <div className="panel__header">
-            <div>
-              <h3>Document Checklist</h3>
-              <p>Checklist is generated automatically from the selected visa type.</p>
-            </div>
-          </div>
-
-          {selectedApplication ? (
-            <>
-              {missingDocuments.length > 0 ? (
-                <article className="alert-card alert-card--warning">
-                  <span className="alert-card__eyebrow">Missing Documents Alert</span>
-                  <strong>{missingDocuments.join(", ")}</strong>
-                </article>
-              ) : (
-                <article className="alert-card alert-card--info">
-                  <span className="alert-card__eyebrow">Checklist Complete</span>
-                  <strong>All required documents are available for this application.</strong>
-                </article>
-              )}
-
-              <div className="cards-grid">
-                {requiredDocuments.map((documentName) => {
-                  const isMissing = missingDocuments.includes(documentName);
-
-                  return (
-                    <article className="placeholder-card" key={documentName}>
-                      <span className="profile-card__eyebrow">Required Document</span>
-                      <strong>{documentName}</strong>
-                      <StatusPill label={isMissing ? "Missing" : "Uploaded"} />
-                    </article>
-                  );
-                })}
+        <div style={{ display: "grid", gap: "1.5rem" }}>
+          {showQuotation ? (
+            <article className="panel">
+              <div className="panel__header">
+                <div>
+                  <h3>Quotation Template</h3>
+                  <p>Preview destination pricing before sending the quotation to the customer.</p>
+                </div>
               </div>
-            </>
-          ) : (
-            <p className="empty-state">Select an application to review its checklist.</p>
-          )}
-        </article>
+
+              {selectedApplication ? (
+                <QuotationTemplate
+                  application={quotationApplication}
+                  selectedApplication={selectedQuotationApplication}
+                  onClose={() => setShowQuotation(false)}
+                />
+              ) : (
+                <p className="empty-state">Select an application to generate a quotation.</p>
+              )}
+            </article>
+          ) : null}
+
+          <article className="panel">
+            <div className="panel__header">
+              <div>
+                <h3>Document Checklist</h3>
+                <p>Checklist is generated automatically from the selected visa type.</p>
+              </div>
+            </div>
+
+            {selectedApplication ? (
+              <>
+                {missingDocuments.length > 0 ? (
+                  <article className="alert-card alert-card--warning">
+                    <span className="alert-card__eyebrow">Missing Documents Alert</span>
+                    <strong>{missingDocuments.join(", ")}</strong>
+                  </article>
+                ) : (
+                  <article className="alert-card alert-card--info">
+                    <span className="alert-card__eyebrow">Checklist Complete</span>
+                    <strong>All required documents are available for this application.</strong>
+                  </article>
+                )}
+
+                <div className="cards-grid">
+                  {requiredDocuments.map((documentName) => {
+                    const isMissing = missingDocuments.includes(documentName);
+
+                    return (
+                      <article className="placeholder-card" key={documentName}>
+                        <span className="profile-card__eyebrow">Required Document</span>
+                        <strong>{documentName}</strong>
+                        <StatusPill label={isMissing ? "Missing" : "Uploaded"} />
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <p className="empty-state">Select an application to review its checklist.</p>
+            )}
+          </article>
+        </div>
       </section>
 
       <Modal isOpen={showNewModal} onClose={() => setShowNewModal(false)} title="New Application">

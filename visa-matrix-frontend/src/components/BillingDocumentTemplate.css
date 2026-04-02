@@ -1,0 +1,299 @@
+.billing-doc {
+  --billing-blue: #1f5fd5;
+  --billing-blue-dark: #0f3f96;
+  --billing-blue-soft: #edf4ff;
+  --billing-border: rgba(31, 95, 213, 0.18);
+  --billing-ink: #173153;
+  --billing-muted: #5e738f;
+  color: var(--billing-ink);
+  font-family: Aptos, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+.billing-doc__sheet {
+  display: grid;
+  gap: 1.4rem;
+  border: 1px solid var(--billing-border);
+  border-radius: 1.5rem;
+  padding: clamp(1rem, 2vw, 2rem);
+  background:
+    radial-gradient(circle at top right, rgba(31, 95, 213, 0.08), transparent 28%),
+    linear-gradient(180deg, #ffffff, #fbfdff);
+  box-shadow: 0 24px 55px rgba(15, 23, 42, 0.08);
+}
+
+.billing-doc__header,
+.billing-doc__brand,
+.billing-doc__meta-row,
+.billing-doc__summary-row,
+.billing-doc__panel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.billing-doc__header {
+  align-items: flex-start;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(23, 49, 83, 0.1);
+}
+
+.billing-doc__brand {
+  justify-content: flex-start;
+}
+
+.billing-doc__logo,
+.billing-doc__logo-fallback {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 1.2rem;
+  object-fit: contain;
+  background: #ffffff;
+  border: 1px solid rgba(23, 49, 83, 0.08);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
+.billing-doc__logo-fallback {
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  color: var(--billing-blue);
+}
+
+.billing-doc__brand-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.billing-doc__brand-copy span,
+.billing-doc__info-card p,
+.billing-doc__panel--total p,
+.billing-doc__footer p,
+.billing-doc__closing-card p,
+.billing-doc__closing-card li {
+  margin: 0;
+  color: var(--billing-muted);
+}
+
+.billing-doc__brand-copy strong {
+  font-size: 1.2rem;
+}
+
+.billing-doc__title-block {
+  display: grid;
+  justify-items: end;
+  gap: 0.3rem;
+  text-align: right;
+}
+
+.billing-doc__eyebrow,
+.billing-doc__section-label,
+.billing-doc__panel-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.billing-doc__eyebrow,
+.billing-doc__section-label {
+  color: var(--billing-blue);
+}
+
+.billing-doc__title-block h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 0.95;
+  letter-spacing: 0.08em;
+  color: var(--billing-blue-dark);
+}
+
+.billing-doc__party-grid,
+.billing-doc__footer-panels,
+.billing-doc__closing,
+.billing-doc__footer {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.billing-doc__info-card,
+.billing-doc__closing-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(23, 49, 83, 0.09);
+  background: #ffffff;
+}
+
+.billing-doc__info-card strong,
+.billing-doc__meta-row strong,
+.billing-doc__summary-row strong,
+.billing-doc__panel-row strong {
+  color: var(--billing-ink);
+}
+
+.billing-doc__info-card--meta {
+  align-content: start;
+}
+
+.billing-doc__meta-row,
+.billing-doc__summary-row,
+.billing-doc__panel-row {
+  padding: 0.4rem 0;
+}
+
+.billing-doc__meta-row span,
+.billing-doc__summary-row span,
+.billing-doc__panel-row span {
+  color: var(--billing-muted);
+}
+
+.billing-doc__table-wrap {
+  overflow-x: auto;
+  border-radius: 1.2rem;
+  border: 1px solid var(--billing-border);
+}
+
+.billing-doc__table {
+  width: 100%;
+  min-width: 48rem;
+  border-collapse: collapse;
+}
+
+.billing-doc__table th,
+.billing-doc__table td {
+  padding: 0.95rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(23, 49, 83, 0.08);
+}
+
+.billing-doc__table th {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--billing-blue-dark), var(--billing-blue));
+}
+
+.billing-doc__table tbody tr:nth-child(even) {
+  background: var(--billing-blue-soft);
+}
+
+.billing-doc__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.billing-doc__numeric {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.billing-doc__empty {
+  padding: 1.25rem;
+  text-align: center;
+  color: var(--billing-muted);
+}
+
+.billing-doc__summary {
+  display: grid;
+  gap: 0.15rem;
+  width: min(100%, 24rem);
+  margin-left: auto;
+  padding: 1rem 1.2rem;
+  border-radius: 1.1rem;
+  background: #ffffff;
+  border: 1px solid rgba(23, 49, 83, 0.08);
+}
+
+.billing-doc__summary-row:not(:last-child) {
+  border-bottom: 1px solid rgba(23, 49, 83, 0.08);
+}
+
+.billing-doc__panel {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1.15rem 1.2rem;
+  border-radius: 1.2rem;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--billing-blue-dark), var(--billing-blue));
+  box-shadow: 0 18px 36px rgba(31, 95, 213, 0.22);
+}
+
+.billing-doc__panel-label,
+.billing-doc__panel span,
+.billing-doc__panel p,
+.billing-doc__panel strong {
+  color: inherit;
+}
+
+.billing-doc__panel--total {
+  align-content: center;
+  text-align: right;
+}
+
+.billing-doc__grand-total {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  line-height: 1;
+}
+
+.billing-doc__closing-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.billing-doc__footer {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(23, 49, 83, 0.1);
+}
+
+@media (max-width: 900px) {
+  .billing-doc__header,
+  .billing-doc__brand,
+  .billing-doc__meta-row,
+  .billing-doc__summary-row,
+  .billing-doc__panel-row {
+    align-items: flex-start;
+  }
+
+  .billing-doc__header,
+  .billing-doc__party-grid,
+  .billing-doc__footer-panels,
+  .billing-doc__closing,
+  .billing-doc__footer {
+    grid-template-columns: 1fr;
+  }
+
+  .billing-doc__title-block {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .billing-doc__summary {
+    width: 100%;
+  }
+
+  .billing-doc__panel--total {
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .billing-doc__sheet {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+
+  .billing-doc__logo,
+  .billing-doc__logo-fallback {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .billing-doc__table {
+    min-width: 40rem;
+  }
+}

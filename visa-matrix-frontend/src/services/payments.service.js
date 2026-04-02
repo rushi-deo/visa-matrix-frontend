@@ -1,7 +1,4 @@
 import apiClient, { API_ENDPOINTS, extractResponseData } from "./apiClient";
-import { getPayments as getFallbackPayments } from "./mockApi";
-
-const cloneRows = (rows = []) => rows.map((row) => ({ ...row }));
 
 const normalizePayment = (payment = {}) => ({
   ...payment,
@@ -15,16 +12,15 @@ const normalizePayment = (payment = {}) => ({
   paidOn: payment.paidOn ?? payment.paid_on ?? null,
 });
 
-export async function fetchPayments(fallbackData = getFallbackPayments()) {
+export async function fetchPayments() {
   try {
     const response = await apiClient.get(API_ENDPOINTS.invoices);
     const invoices = extractResponseData(response);
 
-    return Array.isArray(invoices) && invoices.length > 0
-      ? invoices.map(normalizePayment)
-      : cloneRows(fallbackData);
-  } catch {
-    return cloneRows(fallbackData);
+    return Array.isArray(invoices) ? invoices.map(normalizePayment) : [];
+  } catch (error) {
+    console.error("Failed to fetch invoices:", error);
+    throw error;
   }
 }
 
@@ -42,7 +38,13 @@ export async function updatePaymentStatus(
     return payment
       ? normalizePayment(payment)
       : { ...fallbackPayment, paymentStatus: status };
-  } catch {
-    return { ...fallbackPayment, paymentStatus: status };
+  } catch (error) {
+    console.error(`Failed to update invoice ${invoiceId}:`, error);
+    throw error;
   }
+}
+
+export async function createInvoice(data) {
+  const response = await apiClient.post(API_ENDPOINTS.invoices, data);
+  return extractResponseData(response);
 }
