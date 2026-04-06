@@ -20,6 +20,11 @@ const formatCurrency = (value, currency = "INR") =>
     maximumFractionDigits: 2,
   }).format(toNumber(value));
 
+const extractPricingPayload = (response) => {
+  const payload = response?.data?.data ?? response?.data ?? null;
+  return Array.isArray(payload) ? payload[0] ?? null : payload;
+};
+
 const fallbackCompany = {
   addressLines: [
     "2nd Floor, Visa Matrix Business Centre",
@@ -67,9 +72,14 @@ const buildLineItemsFromPricing = (pricing) => {
     },
     {
       label: "Embassy Fee",
-      keys: ["embassy_fee", "embassyFee", "government_fee", "governmentFee"],
+      keys: ["govt_fee", "govtFee", "embassy_fee", "embassyFee", "government_fee", "governmentFee"],
       hsnSac: "9997",
       isGovernmentFee: true,
+    },
+    {
+      label: "Consultation",
+      keys: ["consultation_fee", "consultationFee"],
+      hsnSac: "9983",
     },
     {
       label: "Premium Lounge",
@@ -124,10 +134,12 @@ export default function QuotationTemplate({ application, onClose, selectedApplic
     activeApplication?.destination_country ??
     activeApplication?.destinationCountry ??
     "";
+  const countryId = activeApplication?.country_id ?? activeApplication?.countryId ?? null;
   const visaType =
     activeApplication?.visa_type ??
     activeApplication?.visaType ??
     "Not provided";
+  const visaTypeId = activeApplication?.visa_type_id ?? activeApplication?.visaTypeId ?? null;
 
   useEffect(() => {
     let isMounted = true;
@@ -140,13 +152,20 @@ export default function QuotationTemplate({ application, onClose, selectedApplic
       }
 
       setLoading(true);
+      setPricing(null);
 
       try {
-        const response = await apiClient.get("/visa-rules", {
-          params: { country },
-        });
-        const payload = response?.data?.data ?? response?.data ?? null;
-        const pricingData = Array.isArray(payload) ? payload[0] ?? null : payload;
+        let pricingResponse = null;
+
+        if (countryId && visaTypeId) {
+          pricingResponse = await apiClient.get(`/visa-fees/${countryId}/${visaTypeId}`);
+        } else {
+          pricingResponse = await apiClient.get("/visa-rules", {
+            params: { country },
+          });
+        }
+
+        const pricingData = extractPricingPayload(pricingResponse);
         const nextItems = buildLineItemsFromPricing(pricingData);
 
         if (!isMounted) {
@@ -176,7 +195,7 @@ export default function QuotationTemplate({ application, onClose, selectedApplic
     return () => {
       isMounted = false;
     };
-  }, [activeApplication, country]);
+  }, [activeApplication, country, countryId, visaTypeId]);
 
   const quotationDate = activeApplication?.submissionDate || activeApplication?.submission_date
     ? new Date(activeApplication?.submissionDate ?? activeApplication?.submission_date)
@@ -190,6 +209,16 @@ export default function QuotationTemplate({ application, onClose, selectedApplic
     () => items.filter((item) => item.isGovernmentFee).reduce((sum, item) => sum + item.total, 0),
     [items],
   );
+  const govtFee = toNumber(
+    pricing?.govt_fee ?? pricing?.govtFee ?? pricing?.government_fee ?? pricing?.governmentFee,
+  );
+  const serviceFee = toNumber(
+    pricing?.service_fee ?? pricing?.serviceFee ?? pricing?.base_price,
+  );
+  const consultationFee = toNumber(
+    pricing?.consultation_fee ?? pricing?.consultationFee,
+  );
+  const pricingTotal = govtFee + serviceFee + consultationFee;
   const cgst = taxableValue * 0.09;
   const sgst = taxableValue * 0.09;
   const grandTotal = taxableValue + cgst + sgst + governmentFees;
@@ -235,6 +264,26 @@ export default function QuotationTemplate({ application, onClose, selectedApplic
         <p>
           <strong>Destination:</strong> {activeApplication?.destination_country ?? activeApplication?.destinationCountry ?? "Not provided"}
         </p>
+        {pricing ? (
+          <>
+            <p>
+              <strong>Govt Fee:</strong> {formatCurrency(govtFee, currency)}
+            </p>
+            <p>
+              <strong>Service Fee:</strong> {formatCurrency(serviceFee, currency)}
+            </p>
+            <p>
+              <strong>Consultation Fee:</strong> {formatCurrency(consultationFee, currency)}
+            </p>
+            <p>
+              <strong>Total:</strong> {formatCurrency(pricingTotal, currency)}
+            </p>
+          </>
+        ) : (
+          <p>
+            <strong>Pricing:</strong> Loading...
+          </p>
+        )}
       </article>
 
       <BillingDocumentTemplate

@@ -1,6 +1,7 @@
 import React from "react";
 import { useEffect, useMemo, useState } from "react";
 import DataTable from "../components/DataTable";
+import InvoicePreview from "../components/InvoicePreview";
 import Modal from "../components/Modal";
 import PageHeader from "../components/PageHeader";
 import QuotationTemplate from "../components/QuotationTemplate";
@@ -18,6 +19,7 @@ import {
 } from "../services/application.service";
 import { fetchDocuments } from "../services/documents.service";
 import { getVisaDocumentChecklists } from "../services/mockApi";
+import apiClient, { extractResponseData } from "../services/apiClient";
 import {
   buildApplicationFromForm,
   formatDate,
@@ -50,6 +52,9 @@ export default function Applications() {
   const [showQuotation, setShowQuotation] = useState(false);
   const [selectedQuotationApplication, setSelectedQuotationApplication] = useState(null);
   const [quotationApplication, setQuotationApplication] = useState(null);
+  const [invoiceData, setInvoiceData] = useState(null);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceError, setInvoiceError] = useState("");
   const [selectedApplicationId, setSelectedApplicationId] = useState(
     applications[0]?.id ?? "",
   );
@@ -162,6 +167,9 @@ export default function Applications() {
     setShowQuotation(false);
     setSelectedQuotationApplication(null);
     setQuotationApplication(null);
+    setInvoiceData(null);
+    setInvoiceLoading(false);
+    setInvoiceError("");
   }, [selectedApplicationId]);
 
   const scopedApplications = useMemo(() => {
@@ -293,6 +301,53 @@ export default function Applications() {
     }
   };
 
+  const handleSendQuotation = async () => {
+    if (!selectedApplication) {
+      return;
+    }
+
+    const country =
+      selectedApplication.destinationCountry ??
+      selectedApplication.destination_country ??
+      "";
+    const visaType =
+      selectedApplication.visaType ??
+      selectedApplication.visa_type ??
+      "";
+
+    setSelectedQuotationApplication(selectedApplication);
+    setQuotationApplication(selectedApplication);
+    setShowQuotation(true);
+    setInvoiceData(null);
+    setInvoiceError("");
+
+    if (!country || !visaType) {
+      setInvoiceError("Country and visa type are required to generate an invoice.");
+      return;
+    }
+
+    setInvoiceLoading(true);
+
+    try {
+      const response = await apiClient.post("/generate-invoice", {
+        country,
+        visaType,
+      });
+      const payload = extractResponseData(response) ?? response?.data ?? null;
+
+      setInvoiceData(payload);
+    } catch (generateError) {
+      console.error("Failed to generate invoice:", generateError);
+      setInvoiceError(
+        generateError?.response?.data?.error ??
+          generateError?.message ??
+          "Unable to generate invoice preview.",
+      );
+    } finally {
+      setInvoiceLoading(false);
+    }
+  };
+
   const finalCountries = countries && countries.length > 0 ? countries : fallbackCountries;
   const countryOptions = finalCountries
     .map((country) => ({
@@ -420,14 +475,11 @@ export default function Applications() {
               <div className="button-row">
                 <button
                   className="secondary-button"
-                  onClick={() => {
-                    setSelectedQuotationApplication(selectedApplication);
-                    setQuotationApplication(selectedApplication);
-                    setShowQuotation(true);
-                  }}
+                  disabled={invoiceLoading}
+                  onClick={handleSendQuotation}
                   type="button"
                 >
-                  Send Quotation
+                  {invoiceLoading ? "Generating Invoice..." : "Send Quotation"}
                 </button>
                 <StatusPill label={selectedApplication.status} />
               </div>
@@ -545,11 +597,30 @@ export default function Applications() {
               </div>
 
               {selectedApplication ? (
-                <QuotationTemplate
-                  application={quotationApplication}
-                  selectedApplication={selectedQuotationApplication}
-                  onClose={() => setShowQuotation(false)}
-                />
+                <>
+                  <QuotationTemplate
+                    application={quotationApplication}
+                    selectedApplication={selectedQuotationApplication}
+                    onClose={() => setShowQuotation(false)}
+                  />
+
+                  {invoiceLoading ? (
+                    <article className="placeholder-card">
+                      <span className="profile-card__eyebrow">Invoice Status</span>
+                      <strong>Generating invoice preview...</strong>
+                      <p>We are fetching the latest invoice details from the backend.</p>
+                    </article>
+                  ) : null}
+
+                  {invoiceError ? <p className="form-error">{invoiceError}</p> : null}
+
+                  {invoiceData ? (
+                    <InvoicePreview
+                      application={selectedQuotationApplication ?? quotationApplication}
+                      invoiceData={invoiceData}
+                    />
+                  ) : null}
+                </>
               ) : (
                 <p className="empty-state">Select an application to generate a quotation.</p>
               )}
