@@ -13,7 +13,11 @@ const normalizeApplication = (application = {}) => ({
   destinationCountry:
     application.destinationCountry ?? application.destination_country ?? "",
   visaType: application.visaType ?? application.visa_type ?? "",
-  assignedAgent: application.assignedAgent ?? application.assigned_agent ?? "",
+  assignedAgent:
+    application.assignedAgent ??
+    application.assigned_agent ??
+    application.agent_assigned ??
+    "",
   submissionDate:
     application.submissionDate ??
     application.submission_date ??
@@ -51,6 +55,23 @@ const mapApplicationToDbPayload = (application = {}) =>
     created_at: application.created_at,
   });
 
+const mapApplicationToNewApplicationPayload = (application = {}) =>
+  compactPayload({
+    customer_name: application.customerName ?? application.customer_name,
+    passport_number: application.passportNumber ?? application.passport_number,
+    email: application.email,
+    phone: application.phone,
+    destination_country:
+      application.destinationCountry ?? application.destination_country,
+    visa_type: application.visaType ?? application.visa_type,
+    travel_date: application.travelDate ?? application.travel_date,
+    agent_assigned:
+      application.agentAssigned ??
+      application.assigned_agent ??
+      application.agent_assigned,
+    lead_source: application.leadSource ?? application.lead_source,
+  });
+
 function getApplicationsTable() {
   if (!supabase) {
     throw new Error("Supabase client is not configured.");
@@ -84,72 +105,24 @@ export async function fetchApplications() {
 
 export async function createApplication(
   payload,
-  currentUser,
+  _currentUser,
 ) {
   if (!supabase) {
     throw new Error("Supabase client is not configured.");
   }
 
-  let authData = null;
-  let authUserId = null;
-
-  const { data: nextAuthData, error: authError } = await supabase.auth.getUser();
-
-  if (authError) {
-    console.error("Supabase auth user lookup error:", authError);
-  } else {
-    authData = nextAuthData;
-    authUserId = nextAuthData?.user?.id ?? null;
-  }
-
-  console.log("Current User:", authData);
-
-  const insertPayload = compactPayload({
-    ...mapApplicationToDbPayload(payload),
-    created_by:
-      payload.created_by ??
-      payload.user_id ??
-      authUserId ??
-      null,
-    organization_id:
-      payload.organization_id ??
-      currentUser?.organization_id ??
-      authData?.user?.user_metadata?.organization_id,
-    created_at: payload.created_at ?? new Date().toISOString(),
-  });
+  const insertPayload = mapApplicationToNewApplicationPayload(payload);
 
   console.log("Payload:", insertPayload);
 
-  const { count, error: countError } = await getApplicationsTable().select("*", {
-    count: "exact",
-    head: true,
-  });
-
-  if (countError) {
-    console.error("Supabase applications count error:", countError);
-    throw countError;
-  }
-
-  const nextCount = (count || 0) + 1;
-  const applicationCode = generateApplicationCode(nextCount);
-
-  console.log("Generated Application Code:", applicationCode);
-
-  const { data, error } = await getApplicationsTable()
-    .insert([
-      {
-        ...insertPayload,
-        application_number: applicationCode,
-      },
-    ])
+  const { data, error } = await supabase
+    .from("new_applications")
+    .insert([insertPayload])
     .select()
     .single();
 
   if (error) {
-    console.error("Insert Error:", error.message, error.details, error.hint, {
-      ...insertPayload,
-      application_number: applicationCode,
-    });
+    console.error("Insert Error:", error.message, error.details, error.hint, insertPayload);
     throw error;
   }
 
