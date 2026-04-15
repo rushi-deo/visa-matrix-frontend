@@ -111,9 +111,24 @@ export async function createApplication(
     throw new Error("Supabase client is not configured.");
   }
 
-  const insertPayload = mapApplicationToNewApplicationPayload(payload);
+  const insertPayload = {
+    customer_name: payload.customerName || payload.customer_name || "",
+    passport_number: payload.passportNumber || payload.passport_number || "NA",
+    email: payload.email || "",
+    phone: payload.phone || "",
+    destination_country:
+      payload.destinationCountry || payload.destination_country || "",
+    visa_type: payload.visaType || payload.visa_type || "General Visa",
+    travel_date: payload.travelDate || payload.travel_date || null,
+    agent_assigned:
+      payload.agentAssigned ||
+      payload.assigned_agent ||
+      payload.agent_assigned ||
+      null,
+    lead_source: payload.leadSource || payload.lead_source || null,
+  };
 
-  console.log("Payload:", insertPayload);
+  console.log("FINAL INSERT PAYLOAD:", insertPayload);
 
   const { data, error } = await supabase
     .from("new_applications")
@@ -122,7 +137,13 @@ export async function createApplication(
     .single();
 
   if (error) {
-    console.error("Insert Error:", error.message, error.details, error.hint, insertPayload);
+    console.error(
+      "Insert Error:",
+      error.message,
+      error.details,
+      error.hint,
+      insertPayload,
+    );
     throw error;
   }
 
