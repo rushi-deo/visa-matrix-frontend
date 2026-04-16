@@ -1,3 +1,5 @@
+import { normalizeVisaType } from "../utils/visaType";
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
 
 const extractCollection = (payload) => {
@@ -37,7 +39,7 @@ const normalizeLead = (lead = {}) => ({
   leadSource: lead.leadSource ?? lead.lead_source ?? "Website",
   status: lead.status ?? "New",
   assignedAgent: lead.assignedAgent ?? lead.assigned_agent ?? "",
-  visaType: lead.visaType ?? lead.visa_type ?? "",
+  visaType: normalizeVisaType(lead.visaType ?? lead.visa_type) ?? "",
   consultationDate:
     lead.consultationDate ??
     lead.consultation_date ??

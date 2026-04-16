@@ -8,6 +8,26 @@ export const checklistCatalog = [
 ];
 
 export const visaDocumentChecklists = {
+  Tourist: [
+    "Passport",
+    "Bank Statement",
+    "Photographs",
+    "Travel Insurance",
+  ],
+  Business: [
+    "Passport",
+    "Photographs",
+    "Travel Insurance",
+    "Invitation Letter",
+    "Financial Proof",
+  ],
+  "Family Visit": [
+    "Passport",
+    "Photographs",
+    "Travel Insurance",
+    "Invitation Letter",
+    "Financial Proof",
+  ],
   "Student Visa": [
     "Passport",
     "Bank Statement",

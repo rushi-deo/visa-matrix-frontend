@@ -1,15 +1,16 @@
 import { countries as fallbackCountries } from "../data/countries";
 import { supabase } from "../supabase";
+import { DB_VISA_TYPES, normalizeVisaType } from "../utils/visaType";
 
-const defaultVisaType = "General Visa";
+const defaultVisaType = DB_VISA_TYPES[0];
 
 const toLegacyCountryShape = (country, fallback = {}) => {
   const name = country.name ?? fallback.country ?? "Unknown";
   const visaTypes =
     Array.isArray(country.visa_types) && country.visa_types.length > 0
-      ? country.visa_types
+      ? country.visa_types.map(normalizeVisaType)
       : fallback.visaType
-        ? [fallback.visaType]
+        ? [normalizeVisaType(fallback.visaType)]
         : [defaultVisaType];
   const primaryVisaType = visaTypes[0];
 
@@ -102,6 +103,6 @@ export const getCountryOptions = async () => {
   return {
     countries,
     countryOptions: [...new Set(countries.map((country) => country.country))],
-    visaTypeOptions: [...new Set(countries.flatMap((country) => country.visa_types))],
+    visaTypeOptions: [...DB_VISA_TYPES],
   };
 };

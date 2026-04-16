@@ -1,5 +1,6 @@
 import React from "react";
 import { useState } from "react";
+import { normalizeVisaType } from "../utils/visaType";
 
 const createInitialState = (initialValues = {}) => ({
   customerName: initialValues.customerName ?? initialValues.leadName ?? "",
@@ -8,7 +9,7 @@ const createInitialState = (initialValues = {}) => ({
   phone: initialValues.phone ?? "",
   destinationCountry:
     initialValues.destinationCountry ?? initialValues.interestedCountry ?? "",
-  visaType: initialValues.visaType ?? "",
+  visaType: normalizeVisaType(initialValues.visaType ?? initialValues.visa_type) ?? "",
   travelDate: initialValues.travelDate ?? "",
   agentAssigned: initialValues.agentAssigned ?? initialValues.assignedAgent ?? "",
   leadSource: initialValues.leadSource ?? initialValues.lead_source ?? "",

@@ -1,4 +1,5 @@
 import { supabase } from "../supabase";
+import { normalizeVisaType } from "../utils/visaType";
 
 const normalizeApplication = (application = {}) => ({
   ...application,
@@ -12,7 +13,7 @@ const normalizeApplication = (application = {}) => ({
   customerName: application.customerName ?? application.customer_name ?? "",
   destinationCountry:
     application.destinationCountry ?? application.destination_country ?? "",
-  visaType: application.visaType ?? application.visa_type ?? "",
+  visaType: normalizeVisaType(application.visaType ?? application.visa_type) ?? "",
   assignedAgent:
     application.assignedAgent ??
     application.assigned_agent ??
@@ -41,7 +42,7 @@ const mapApplicationToDbPayload = (application = {}) =>
     phone: application.phone,
     destination_country:
       application.destinationCountry ?? application.destination_country,
-    visa_type: application.visaType ?? application.visa_type,
+    visa_type: normalizeVisaType(application.visaType ?? application.visa_type),
     travel_date: application.travelDate ?? application.travel_date,
     assigned_to: application.assignedAgent || application.assigned_agent || null,
     lead_source: application.leadSource ?? application.lead_source,
@@ -63,7 +64,7 @@ const mapApplicationToNewApplicationPayload = (application = {}) =>
     phone: application.phone,
     destination_country:
       application.destinationCountry ?? application.destination_country,
-    visa_type: application.visaType ?? application.visa_type,
+    visa_type: normalizeVisaType(application.visaType ?? application.visa_type),
     travel_date: application.travelDate ?? application.travel_date,
     agent_assigned:
       application.agentAssigned ??
@@ -118,7 +119,7 @@ export async function createApplication(
     phone: payload.phone || "",
     destination_country:
       payload.destinationCountry || payload.destination_country || "",
-    visa_type: payload.visaType || payload.visa_type || "General Visa",
+    visa_type: normalizeVisaType(payload.visaType || payload.visa_type) || "Tourist",
     travel_date: payload.travelDate || payload.travel_date || null,
     agent_assigned:
       payload.agentAssigned ||

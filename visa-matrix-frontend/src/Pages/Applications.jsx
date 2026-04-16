@@ -35,6 +35,7 @@ import {
   isWorkflowTransitionAllowed,
   normalizeApplicationWorkflow,
 } from "../utils/workflow";
+import { DB_VISA_TYPES } from "../utils/visaType";
 
 export default function Applications() {
   const { countries: fallbackCountries } = useCountries();
@@ -355,9 +356,7 @@ export default function Applications() {
       name: country.name ?? country.country ?? country.code ?? "",
     }))
     .filter((country) => country.code && country.name);
-  const visaTypeOptions = [
-    ...new Set(fallbackCountries.flatMap((country) => country.visa_types)),
-  ];
+  const visaTypeOptions = DB_VISA_TYPES;
 
   return (
     <DashboardLayout>

@@ -10,6 +10,7 @@ import { useCountries } from "../hooks/useCountries";
 import { getPageCount } from "../services/erpService";
 import { fetchLeads } from "../services/api";
 import { createLead, updateLead } from "../services/leads.service";
+import { DB_VISA_TYPES } from "../utils/visaType";
 
 const emptyLead = {
   leadName: "",
@@ -72,7 +73,7 @@ export default function CRM() {
   const pageSize = 5;
   const pageCount = getPageCount(filteredLeads, pageSize);
   const countryOptions = [...new Set(countries.map((country) => country.country))];
-  const visaTypeOptions = [...new Set(countries.flatMap((country) => country.visa_types))];
+  const visaTypeOptions = DB_VISA_TYPES;
 
   const openScheduleModal = (lead) => {
     setSelectedLead(lead);

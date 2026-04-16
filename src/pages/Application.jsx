@@ -19,7 +19,7 @@ const Application = () => {
         phone: '',
         nationality: '',
         destinationCountry: '',
-        visaType: 'Tourist Visa',
+        visaType: 'Tourist',
         travelDate: '',
         duration: ''
     });
@@ -178,9 +178,9 @@ const Application = () => {
                                 value={formData.visaType}
                                 onChange={(e) => handleInputChange('visaType', e.target.value)}
                             >
-                                <option>Tourist Visa</option>
-                                <option>Business Visa</option>
-                                <option>Student Visa</option>
+                                <option>Tourist</option>
+                                <option>Business</option>
+                                <option>Family Visit</option>
                             </select>
                         </div>
                         <div className="form-group">
