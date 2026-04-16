@@ -44,13 +44,15 @@ const mapApplicationToDbPayload = (application = {}) =>
       application.destinationCountry ?? application.destination_country,
     visa_type: normalizeVisaType(application.visaType ?? application.visa_type),
     travel_date: application.travelDate ?? application.travel_date,
-    assigned_to: application.assignedAgent || application.assigned_agent || null,
+    assigned_to:
+      application.assignedAgent || application.assigned_agent || null,
     lead_source: application.leadSource ?? application.lead_source,
     stage: application.stage,
     status: application.status,
     submission_date: application.submissionDate ?? application.submission_date,
     embassy_interview_date:
-      application.embassyInterviewDate ?? application.embassy_interview_date,
+      application.embassyInterviewDate ??
+      application.embassy_interview_date,
     organization_id: application.organization_id,
     created_by: application.created_by,
     created_at: application.created_at,
@@ -104,22 +106,31 @@ export async function fetchApplications() {
   return Array.isArray(data) ? data.map(normalizeApplication) : [];
 }
 
-export async function createApplication(
-  payload,
-  _currentUser,
-) {
+export async function createApplication(payload, _currentUser) {
   if (!supabase) {
     throw new Error("Supabase client is not configured.");
   }
 
+
   const insertPayload = {
     customer_name: payload.customerName || payload.customer_name || "",
     passport_number: payload.passportNumber || payload.passport_number || "NA",
+
+  // ✅ SAFE payload (fix for RLS error)
+  const insertPayload = {
+    customer_name: payload.customerName || payload.customer_name || "",
+    passport_number:
+      payload.passportNumber || payload.passport_number || "NA",
+b6c6b746ad8789251e8bd470812ae8fba27d26ae
     email: payload.email || "",
     phone: payload.phone || "",
     destination_country:
       payload.destinationCountry || payload.destination_country || "",
+
     visa_type: normalizeVisaType(payload.visaType || payload.visa_type) || "Tourist",
+
+    visa_type: payload.visaType || payload.visa_type || "General Visa",
+b6c6b746ad8789251e8bd470812ae8fba27d26ae
     travel_date: payload.travelDate || payload.travel_date || null,
     agent_assigned:
       payload.agentAssigned ||
@@ -143,7 +154,11 @@ export async function createApplication(
       error.message,
       error.details,
       error.hint,
+
       insertPayload,
+
+      insertPayload
+b6c6b746ad8789251e8bd470812ae8fba27d26ae
     );
     throw error;
   }
@@ -152,10 +167,7 @@ export async function createApplication(
   return normalizeApplication(data);
 }
 
-export async function updateApplication(
-  applicationId,
-  payload,
-) {
+export async function updateApplication(applicationId, payload) {
   const updatePayload = mapApplicationToDbPayload(payload);
 
   const { data, error } = await getApplicationsTable()
@@ -163,6 +175,7 @@ export async function updateApplication(
     .eq("id", applicationId)
     .select()
     .single();
+
   if (error) {
     console.error("Supabase application update error:", error);
     throw error;
