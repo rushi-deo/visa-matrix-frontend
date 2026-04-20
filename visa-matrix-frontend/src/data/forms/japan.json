@@ -1,0 +1,54 @@
+{
+  "country": "Japan",
+  "sections": [
+    {
+      "id": "applicant_details",
+      "title": "Applicant Details",
+      "fields": [
+        {
+          "id": "fullName",
+          "label": "Full Name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "passportNumber",
+          "label": "Passport Number",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "dateOfBirth",
+          "label": "Date of Birth",
+          "type": "date",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "travel_details",
+      "title": "Travel Details",
+      "fields": [
+        {
+          "id": "visaType",
+          "label": "Visa Type",
+          "type": "select",
+          "required": true,
+          "options": ["Tourist", "Business", "Student"]
+        },
+        {
+          "id": "arrivalDate",
+          "label": "Arrival Date",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "accommodationAddress",
+          "label": "Accommodation Address",
+          "type": "textarea",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

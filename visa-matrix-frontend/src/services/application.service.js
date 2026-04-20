@@ -112,16 +112,11 @@ export async function createApplication(payload, _currentUser) {
   }
 
 
-  const insertPayload = {
-    customer_name: payload.customerName || payload.customer_name || "",
-    passport_number: payload.passportNumber || payload.passport_number || "NA",
-
   // ✅ SAFE payload (fix for RLS error)
   const insertPayload = {
     customer_name: payload.customerName || payload.customer_name || "",
     passport_number:
       payload.passportNumber || payload.passport_number || "NA",
-b6c6b746ad8789251e8bd470812ae8fba27d26ae
     email: payload.email || "",
     phone: payload.phone || "",
     destination_country:
@@ -130,7 +125,6 @@ b6c6b746ad8789251e8bd470812ae8fba27d26ae
     visa_type: normalizeVisaType(payload.visaType || payload.visa_type) || "Tourist",
 
     visa_type: payload.visaType || payload.visa_type || "General Visa",
-b6c6b746ad8789251e8bd470812ae8fba27d26ae
     travel_date: payload.travelDate || payload.travel_date || null,
     agent_assigned:
       payload.agentAssigned ||
@@ -158,7 +152,6 @@ b6c6b746ad8789251e8bd470812ae8fba27d26ae
       insertPayload,
 
       insertPayload
-b6c6b746ad8789251e8bd470812ae8fba27d26ae
     );
     throw error;
   }

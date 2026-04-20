@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
@@ -8,7 +8,7 @@ import accessControlRoutes from "./routes/accessControlRoutes.js";
 import invoicesRoutes from "./routes/invoicesRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
 import hrRoutes from "./modules/hr/index.js";
-import enterpriseHrRoutes from "./src/services/hr/index.js";
+import enterpriseHrRoutes from "./services/hr/index.js";
 import { getSupabaseConfigStatus } from "./config/supabaseClient.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
