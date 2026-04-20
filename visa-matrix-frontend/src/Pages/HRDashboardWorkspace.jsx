@@ -1,4 +1,5 @@
 import React from "react";
+import { useEffect } from "react";
 import StatCard from "../components/StatCard";
 import { hrWorkspaceApi } from "../features/hr/api/hrWorkspaceApi";
 import HrErrorState from "../features/hr/components/HrErrorState";
@@ -6,6 +7,7 @@ import HrLoadingState from "../features/hr/components/HrLoadingState";
 import HrTrendBars from "../features/hr/components/HrTrendBars";
 import HrWorkspaceLayout from "../features/hr/components/HrWorkspaceLayout";
 import { useHrResource } from "../features/hr/hooks/useHrResource";
+import { getFormSchema } from "../services/formService";
 
 export default function HRDashboardWorkspace() {
   const { data, error, loading, reload } = useHrResource(
@@ -20,6 +22,15 @@ export default function HRDashboardWorkspace() {
     },
     [],
   );
+
+  useEffect(() => {
+    async function testFormFetch() {
+      const data = await getFormSchema("Japan", "tourist");
+      console.log("FORM DATA:", data);
+    }
+
+    testFormFetch();
+  }, []);
 
   if (loading) {
     return (
@@ -102,4 +113,3 @@ export default function HRDashboardWorkspace() {
     </HrWorkspaceLayout>
   );
 }
-
