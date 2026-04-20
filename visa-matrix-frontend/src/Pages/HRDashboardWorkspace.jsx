@@ -1,5 +1,7 @@
 import React from "react";
 import { useEffect } from "react";
+import { useState } from "react";
+import FormEngine from "../components/FormEngine";
 import StatCard from "../components/StatCard";
 import { hrWorkspaceApi } from "../features/hr/api/hrWorkspaceApi";
 import HrErrorState from "../features/hr/components/HrErrorState";
@@ -10,6 +12,9 @@ import { useHrResource } from "../features/hr/hooks/useHrResource";
 import { getFormSchema } from "../services/formService";
 
 export default function HRDashboardWorkspace() {
+  const [country, setCountry] = useState("");
+  const [visaType, setVisaType] = useState("tourist");
+
   const { data, error, loading, reload } = useHrResource(
     async () => {
       const [dashboard, aiInsights, notifications] = await Promise.all([
@@ -55,6 +60,15 @@ export default function HRDashboardWorkspace() {
 
   return (
     <HrWorkspaceLayout title="HR Dashboard" description="Analytics-led workforce command center.">
+      <section className="panel">
+        <select value={country} onChange={(e) => setCountry(e.target.value)}>
+          <option value="">Select Country</option>
+          <option value="Japan">Japan</option>
+        </select>
+
+        <FormEngine country={country} visaType={visaType} />
+      </section>
+
       <section className="stats-grid">
         <StatCard title="Employees" value={data.dashboard.metrics.totalEmployees} icon="HC" color="#0f766e" />
         <StatCard title="Active Headcount" value={data.dashboard.metrics.activeEmployees} icon="AH" color="#1d4ed8" />
