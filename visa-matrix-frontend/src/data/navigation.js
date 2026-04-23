@@ -27,6 +27,11 @@ export const navigationItems = [
     shortLabel: "Workflow",
   },
   {
+    label: "Visa Question Flow",
+    path: "/visa-question-flow",
+    shortLabel: "Questions",
+  },
+  {
     label: "Tasks / Case Management",
     path: "/tasks",
     shortLabel: "Tasks",

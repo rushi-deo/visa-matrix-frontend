@@ -1,4 +1,5 @@
 import { normalizeVisaType } from "../utils/visaType";
+import apiClient, { extractResponseData } from "./apiClient";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
 
@@ -95,4 +96,25 @@ export const fetchCustomers = async () => {
     console.error("API Error:", error);
     return [];
   }
+};
+
+export const fetchVisaCountries = async () => {
+  const response = await apiClient.get("/countries");
+  const countries = extractResponseData(response);
+
+  return Array.isArray(countries) ? countries : [];
+};
+
+export const fetchCountryQuestions = async (countryId) => {
+  if (!countryId) {
+    throw new Error("Select a country before loading questions.");
+  }
+
+  const response = await apiClient.get(`/countries/${countryId}/questions`);
+  const payload = response?.data ?? {};
+
+  return {
+    country_id: payload.country_id ?? countryId,
+    questions: Array.isArray(payload.questions) ? payload.questions : [],
+  };
 };

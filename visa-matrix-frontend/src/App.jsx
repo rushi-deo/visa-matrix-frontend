@@ -25,6 +25,7 @@ import Reports from "./Pages/Reports";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Tasks from "./Pages/Tasks";
+import VisaQuestionFlow from "./Pages/VisaQuestionFlow";
 import Workflow from "./Pages/Workflow";
 import { applyTheme } from "./theme/theme";
 
@@ -171,6 +172,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Workflow />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/visa-question-flow"
+            element={
+              <ProtectedRoute>
+                <VisaQuestionFlow />
               </ProtectedRoute>
             }
           />
