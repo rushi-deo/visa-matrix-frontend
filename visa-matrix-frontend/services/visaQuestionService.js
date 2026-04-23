@@ -1,15 +1,11 @@
 import { isSupabaseConfigured, supabase } from "../config/supabaseClient.js";
 
-const QUESTION_TABLES = process.env.VISA_QUESTIONS_TABLE
-  ? [process.env.VISA_QUESTIONS_TABLE]
-  : ["questions", "visa_questions"];
-
-const toQuestionResponse = (question) => ({
-  id: question.id,
-  label: question.label,
-  type: question.type,
-  required: Boolean(question.required),
-  options: question.options ?? null,
+const toQuestionResponse = (item) => ({
+  id: item.id,
+  label: item.label || item.requirement || item.name || "Question",
+  type: item.type || "text",
+  required: item.required ?? true,
+  options: item.options || [],
 });
 
 const createServiceError = (message, status = 500) => {
@@ -18,38 +14,27 @@ const createServiceError = (message, status = 500) => {
   return error;
 };
 
-const queryQuestionsFromTable = (tableName, countryId) =>
-  supabase
-    .from(tableName)
-    .select("id, label, type, required, options")
-    .eq("country_id", countryId);
-
 export const getQuestionsByCountryId = async (countryId) => {
   if (!isSupabaseConfigured || !supabase) {
     throw createServiceError("Question service is unavailable.", 503);
   }
 
-  let lastError = null;
+  const { data, error } = await supabase
+    .from("visa_types")
+    .select("*")
+    .eq("country_id", countryId);
 
-  for (const tableName of QUESTION_TABLES) {
-    const { data, error } = await queryQuestionsFromTable(tableName, countryId);
-
-    if (!error) {
-      return (data ?? []).map(toQuestionResponse);
-    }
-
-    lastError = error;
-
-    if (error.code !== "PGRST205") {
-      break;
-    }
+  if (error) {
+    console.error("[VisaQuestionService] visa_type query failed:", {
+      code: error.code,
+      message: error.message,
+    });
+    throw createServiceError("Failed to fetch visa questions", 500);
   }
 
-  console.error("[VisaQuestionService] Supabase question query failed:", {
-    code: lastError?.code,
-    message: lastError?.message,
-  });
-  throw createServiceError("Unable to load country questions.", 500);
+  return {
+    questions: (data ?? []).map(toQuestionResponse),
+  };
 };
 
 export default {
