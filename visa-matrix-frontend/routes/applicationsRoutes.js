@@ -25,10 +25,7 @@ router.post(
   asyncHandler(createApplicationHandler),
 );
 
-router.get(
-  "/applications/:id",
-  asyncHandler(getApplicationHandler),
-);
+router.get("/applications/:id", asyncHandler(getApplicationHandler));
 
 router.patch(
   "/applications/:id",

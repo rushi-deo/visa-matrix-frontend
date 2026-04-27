@@ -47,8 +47,15 @@ export const getApplicationHandler = async (req, res) => {
 export const createApplicationHandler = async (req, res) => {
   try {
     const applicationData = req.body;
-    const requiredFields = ["customerName", "email", "destinationCountry", "visaType"];
-    const missingFields = requiredFields.filter((field) => !applicationData[field]);
+    const requiredFields = [
+      "customerName",
+      "email",
+      "destinationCountry",
+      "visaType",
+    ];
+    const missingFields = requiredFields.filter(
+      (field) => !applicationData[field],
+    );
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -61,7 +68,8 @@ export const createApplicationHandler = async (req, res) => {
     const newApplication = await createApplication(applicationData, req.user);
 
     await createNotification({
-      organization_id: newApplication.organization_id ?? req.user.organization_id,
+      organization_id:
+        newApplication.organization_id ?? req.user.organization_id,
       title: "Application created",
       message: `${newApplication.customerName} application was created for ${newApplication.destinationCountry}.`,
       module: "notifications",
@@ -70,7 +78,8 @@ export const createApplicationHandler = async (req, res) => {
 
     await createAuditLog({
       user_id: req.user.id,
-      organization_id: newApplication.organization_id ?? req.user.organization_id,
+      organization_id:
+        newApplication.organization_id ?? req.user.organization_id,
       action: "application_created",
       module: "applications",
       entity_id: newApplication.id,
@@ -97,7 +106,11 @@ export const createApplicationHandler = async (req, res) => {
 
 export const updateApplicationHandler = async (req, res) => {
   try {
-    const updatedApplication = await updateApplication(req.params.id, req.body, req.user);
+    const updatedApplication = await updateApplication(
+      req.params.id,
+      req.body,
+      req.user,
+    );
 
     return res.status(200).json({
       success: true,
