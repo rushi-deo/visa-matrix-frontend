@@ -1,7 +1,8 @@
 import { supabase } from "../supabase";
 import { normalizeVisaType } from "../utils/visaType";
+import apiClient, { extractResponseData } from "./apiClient";
 
-const normalizeApplication = (application = {}) => ({
+export const normalizeApplication = (application = {}) => ({
   ...application,
   id: application.id ?? application.application_id ?? "",
   applicationCode:
@@ -17,8 +18,17 @@ const normalizeApplication = (application = {}) => ({
   assignedAgent:
     application.assignedAgent ??
     application.assigned_agent ??
+    application.assigned_to ??
     application.agent_assigned ??
     "",
+  agentAssigned:
+    application.agentAssigned ??
+    application.assignedAgent ??
+    application.assigned_to ??
+    application.agent_assigned ??
+    "",
+  passportNumber: application.passportNumber ?? application.passport_number ?? "",
+  travelDate: application.travelDate ?? application.travel_date ?? "",
   submissionDate:
     application.submissionDate ??
     application.submission_date ??
@@ -104,6 +114,25 @@ export async function fetchApplications() {
 
   console.log("Supabase applications response:", data);
   return Array.isArray(data) ? data.map(normalizeApplication) : [];
+}
+
+export async function fetchApplicationById(applicationId) {
+  const response = await apiClient.get(`/applications/${applicationId}`);
+  const payload = extractResponseData(response);
+
+  return normalizeApplication(payload ?? {});
+}
+
+export async function fetchQuotationTemplate() {
+  const response = await apiClient.get("/quotation-template");
+
+  return extractResponseData(response) ?? {};
+}
+
+export async function sendQuotation(payload) {
+  const response = await apiClient.post("/send-quotation", payload);
+
+  return extractResponseData(response) ?? response?.data ?? {};
 }
 
 export async function createApplication(payload, _currentUser) {

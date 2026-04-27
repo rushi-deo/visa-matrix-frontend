@@ -27,6 +27,7 @@ export const getApplicationsHandler = async (req, res) => {
 
 export const getApplicationHandler = async (req, res) => {
   try {
+    console.log("Fetching application:", req.params.id);
     const application = await getApplicationById(req.params.id, req.user);
 
     res.status(200).json({

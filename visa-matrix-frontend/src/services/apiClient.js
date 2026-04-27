@@ -3,7 +3,7 @@ import axios from "axios";
 const AUTH_STORAGE_KEY = "visa-matrix-auth";
 
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001/api";
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
 
 export const API_ENDPOINTS = {
   applications: "/applications",

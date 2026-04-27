@@ -5,6 +5,7 @@ export default function DataTable({
   rowKey = "id",
   emptyMessage = "No records available.",
   caption,
+  onRowClick,
 }) {
   const resolveRowKey = (row, index) => {
     if (typeof rowKey === "function") {
@@ -28,7 +29,23 @@ export default function DataTable({
         <tbody>
           {rows.length > 0 ? (
             rows.map((row, index) => (
-              <tr key={resolveRowKey(row, index)}>
+              <tr
+                className={onRowClick ? "data-table__row--clickable" : undefined}
+                key={resolveRowKey(row, index)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onRowClick(row);
+                        }
+                      }
+                    : undefined
+                }
+                role={onRowClick ? "button" : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+              >
                 {columns.map((column) => (
                   <td key={column.key}>
                     {column.render ? column.render(row) : row[column.key]}

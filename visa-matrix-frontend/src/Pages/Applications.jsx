@@ -1,10 +1,9 @@
 import React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DataTable from "../components/DataTable";
-import InvoicePreview from "../components/InvoicePreview";
 import Modal from "../components/Modal";
 import PageHeader from "../components/PageHeader";
-import QuotationTemplate from "../components/QuotationTemplate";
 import StatusPill from "../components/StatusPill";
 import TablePagination from "../components/TablePagination";
 import NewApplicationForm from "../forms/NewApplicationForm";
@@ -15,29 +14,17 @@ import { fetchCountries } from "../api/countries";
 import {
   createApplication as createApplicationRequest,
   fetchApplications,
-  updateApplication as updateApplicationRequest,
 } from "../services/application.service";
-import { fetchDocuments } from "../services/documents.service";
-import { getVisaDocumentChecklists } from "../services/mockApi";
-import apiClient, { extractResponseData } from "../services/apiClient";
 import {
   buildApplicationFromForm,
-  formatDate,
-  getChecklistForVisaType,
-  getMissingDocuments,
   getPageCount,
   paginateRows,
 } from "../services/erpService";
-import {
-  WORKFLOW_STEPS,
-  applyWorkflowTransition,
-  getWorkflowStatus,
-  isWorkflowTransitionAllowed,
-  normalizeApplicationWorkflow,
-} from "../utils/workflow";
+import { normalizeApplicationWorkflow } from "../utils/workflow";
 import { DB_VISA_TYPES } from "../utils/visaType";
 
 export default function Applications() {
+  const navigate = useNavigate();
   const { countries: fallbackCountries } = useCountries();
   const { currentUser, canAccess } = useAuth();
   const [countries, setCountries] = useState([]);
@@ -45,20 +32,10 @@ export default function Applications() {
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState("");
   const [applications, setApplications] = useState([]);
-  const [documents, setDocuments] = useState([]);
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [page, setPage] = useState(1);
   const [showNewModal, setShowNewModal] = useState(false);
-  const [showQuotation, setShowQuotation] = useState(false);
-  const [selectedQuotationApplication, setSelectedQuotationApplication] = useState(null);
-  const [quotationApplication, setQuotationApplication] = useState(null);
-  const [invoiceData, setInvoiceData] = useState(null);
-  const [invoiceLoading, setInvoiceLoading] = useState(false);
-  const [invoiceError, setInvoiceError] = useState("");
-  const [selectedApplicationId, setSelectedApplicationId] = useState(
-    applications[0]?.id ?? "",
-  );
   const getApplicationDisplayId = (application) =>
     application?.applicationCode || application?.id || "";
 
@@ -66,15 +43,6 @@ export default function Applications() {
     const nextApplications = await fetchApplications();
     console.log("Applications:", nextApplications);
     setApplications(nextApplications);
-    setSelectedApplicationId((currentId) => {
-      const nextSelectedId = preferredApplicationId || currentId;
-
-      if (nextApplications.some((application) => application.id === nextSelectedId)) {
-        return nextSelectedId;
-      }
-
-      return nextApplications[0]?.id ?? "";
-    });
 
     return nextApplications;
   };
@@ -103,19 +71,6 @@ export default function Applications() {
       }
     };
 
-    const loadDocuments = async () => {
-      const { data: nextDocuments } = await fetchDocuments({
-        includeMeta: true,
-      });
-
-      if (!isMounted) {
-        return;
-      }
-
-      console.log("Documents:", nextDocuments);
-      setDocuments(nextDocuments);
-    };
-
     const loadPageData = async () => {
       setLoading(true);
       setPageLoading(true);
@@ -130,23 +85,15 @@ export default function Applications() {
         }
 
         setApplications(nextApplications);
-        setSelectedApplicationId((currentId) =>
-          nextApplications.some((application) => application.id === currentId)
-            ? currentId
-            : nextApplications[0]?.id ?? "",
-        );
         setPageLoading(false);
 
-        loadDocuments();
         loadCountries();
       } catch (loadError) {
         console.error("Failed to load applications:", loadError);
 
         if (isMounted) {
           setApplications([]);
-          setDocuments([]);
           setCountries([]);
-          setSelectedApplicationId("");
           setError(loadError.message ?? "Unable to load applications from Supabase.");
         }
       } finally {
@@ -164,15 +111,6 @@ export default function Applications() {
     };
   }, []);
 
-  useEffect(() => {
-    setShowQuotation(false);
-    setSelectedQuotationApplication(null);
-    setQuotationApplication(null);
-    setInvoiceData(null);
-    setInvoiceLoading(false);
-    setInvoiceError("");
-  }, [selectedApplicationId]);
-
   const scopedApplications = useMemo(() => {
     const normalizedApplications = applications.map(normalizeApplicationWorkflow);
 
@@ -189,7 +127,6 @@ export default function Applications() {
     return normalizedApplications;
   }, [applications, currentUser?.role]);
 
-  const checklists = getVisaDocumentChecklists();
   const filteredApplications = scopedApplications.filter((application) => {
     const matchesSearch = [
       application.id,
@@ -212,71 +149,6 @@ export default function Applications() {
   const pageSize = 5;
   const pageCount = getPageCount(filteredApplications, pageSize);
   const visibleApplications = paginateRows(filteredApplications, page, pageSize);
-  const selectedApplication =
-    filteredApplications.find((application) => application.id === selectedApplicationId) ??
-    filteredApplications[0] ??
-    scopedApplications[0];
-
-  const requiredDocuments = getChecklistForVisaType(
-    selectedApplication?.visaType,
-    checklists,
-  );
-  const missingDocuments = getMissingDocuments(
-    selectedApplication,
-    documents,
-    checklists,
-  );
-
-  const updateWorkflowStage = async (stage, finalDecision = "Approved") => {
-    if (
-      !selectedApplication ||
-      !canAccess("invoicing", "edit") ||
-      !isWorkflowTransitionAllowed(selectedApplication, stage)
-    ) {
-      return;
-    }
-
-    const nextApplication = applyWorkflowTransition(
-      selectedApplication,
-      stage,
-      finalDecision,
-    );
-
-    if (!nextApplication) {
-      return;
-    }
-
-    setApplications((currentApplications) =>
-      currentApplications.map((application) =>
-        application.id === selectedApplication.id
-          ? nextApplication
-          : application,
-      ),
-    );
-
-    try {
-      const persistedApplication = await updateApplicationRequest(
-        selectedApplication.id,
-        {
-          stage: nextApplication.stage,
-          status: nextApplication.status,
-        },
-      );
-
-      setApplications((currentApplications) =>
-        currentApplications.map((application) =>
-          application.id === selectedApplication.id
-            ? normalizeApplicationWorkflow({
-                ...nextApplication,
-                ...persistedApplication,
-              })
-            : application,
-        ),
-      );
-    } catch {
-      // Local optimistic state keeps the workflow usable if the API fails.
-    }
-  };
 
   const handleCreateApplication = async (values) => {
     if (!canAccess("invoicing", "create")) {
@@ -299,53 +171,6 @@ export default function Applications() {
     } catch (createError) {
       console.error("Failed to create application:", createError);
       setError(createError.message ?? "Unable to create application.");
-    }
-  };
-
-  const handleSendQuotation = async () => {
-    if (!selectedApplication) {
-      return;
-    }
-
-    const country =
-      selectedApplication.destinationCountry ??
-      selectedApplication.destination_country ??
-      "";
-    const visaType =
-      selectedApplication.visaType ??
-      selectedApplication.visa_type ??
-      "";
-
-    setSelectedQuotationApplication(selectedApplication);
-    setQuotationApplication(selectedApplication);
-    setShowQuotation(true);
-    setInvoiceData(null);
-    setInvoiceError("");
-
-    if (!country || !visaType) {
-      setInvoiceError("Country and visa type are required to generate an invoice.");
-      return;
-    }
-
-    setInvoiceLoading(true);
-
-    try {
-      const response = await apiClient.post("/generate-invoice", {
-        country,
-        visaType,
-      });
-      const payload = extractResponseData(response) ?? response?.data ?? null;
-
-      setInvoiceData(payload);
-    } catch (generateError) {
-      console.error("Failed to generate invoice:", generateError);
-      setInvoiceError(
-        generateError?.response?.data?.error ??
-          generateError?.message ??
-          "Unable to generate invoice preview.",
-      );
-    } finally {
-      setInvoiceLoading(false);
     }
   };
 
@@ -376,7 +201,7 @@ export default function Applications() {
         <div className="panel__header panel__header--stacked">
           <div>
             <h3>Application Tracking</h3>
-            <p>Filter active cases and open a file to manage workflow stages within your access scope.</p>
+            <p>Filter active cases and open a file to view application details.</p>
           </div>
         </div>
 
@@ -440,15 +265,19 @@ export default function Applications() {
               render: (row) => (
                 <button
                   className="link-button"
-                  onClick={() => setSelectedApplicationId(row.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    navigate(`/applications/${row.id}`);
+                  }}
                   type="button"
                 >
-                  Review
+                  Open
                 </button>
               ),
             },
           ]}
           emptyMessage={pageLoading ? "Loading applications..." : "No applications match the current filters."}
+          onRowClick={(row) => navigate(`/applications/${row.id}`)}
           rowKey="id"
           rows={visibleApplications}
         />
@@ -461,212 +290,6 @@ export default function Applications() {
           page={page}
           pageCount={pageCount}
         />
-      </section>
-
-      <section className="workflow-grid">
-        <article className="panel">
-          <div className="panel__header">
-            <div>
-              <h3>Application Workflow</h3>
-              <p>Each workflow stage updates the application status automatically.</p>
-            </div>
-            {selectedApplication ? (
-              <div className="button-row">
-                <button
-                  className="secondary-button"
-                  disabled={invoiceLoading}
-                  onClick={handleSendQuotation}
-                  type="button"
-                >
-                  {invoiceLoading ? "Generating Invoice..." : "Send Quotation"}
-                </button>
-                <StatusPill label={selectedApplication.status} />
-              </div>
-            ) : null}
-          </div>
-
-          {selectedApplication ? (
-            <>
-              <dl className="detail-list">
-                <div>
-                  <dt>Application ID</dt>
-                  <dd>{getApplicationDisplayId(selectedApplication)}</dd>
-                </div>
-                <div>
-                  <dt>Customer Name</dt>
-                  <dd>{selectedApplication.customerName}</dd>
-                </div>
-                <div>
-                  <dt>Destination Country</dt>
-                  <dd>{selectedApplication.destinationCountry}</dd>
-                </div>
-                <div>
-                  <dt>Visa Type</dt>
-                  <dd>{selectedApplication.visaType}</dd>
-                </div>
-                <div>
-                  <dt>Assigned Agent</dt>
-                  <dd>{selectedApplication.assignedAgent}</dd>
-                </div>
-                <div>
-                  <dt>Lead Source</dt>
-                  <dd>{selectedApplication.leadSource || "Not provided"}</dd>
-                </div>
-                <div>
-                  <dt>Submission Date</dt>
-                  <dd>{formatDate(selectedApplication.submissionDate)}</dd>
-                </div>
-              </dl>
-
-              <div className="workflow-stages">
-                {WORKFLOW_STEPS.map((stage) => {
-                  const canMoveToStage = isWorkflowTransitionAllowed(
-                    selectedApplication,
-                    stage,
-                  );
-
-                  return (
-                    <article
-                      className={`workflow-stage ${
-                        selectedApplication.stage === stage ? "workflow-stage--active" : ""
-                      }`}
-                      key={stage}
-                    >
-                      <div className="workflow-stage__copy">
-                        <strong>{stage}</strong>
-                        <span>
-                          Status update:{" "}
-                          {stage === "Approved / Rejected"
-                            ? "Approved or Rejected"
-                            : getWorkflowStatus(stage)}
-                        </span>
-                      </div>
-
-                      {canAccess("invoicing", "edit") ? (
-                        stage === "Approved / Rejected" ? (
-                          <div className="button-row">
-                            <button
-                              className="secondary-button"
-                              disabled={!canMoveToStage}
-                              onClick={() => updateWorkflowStage(stage, "Approved")}
-                              type="button"
-                            >
-                              Mark Approved
-                            </button>
-                            <button
-                              className="secondary-button"
-                              disabled={!canMoveToStage}
-                              onClick={() => updateWorkflowStage(stage, "Rejected")}
-                              type="button"
-                            >
-                              Mark Rejected
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            className="secondary-button"
-                            disabled={!canMoveToStage}
-                            onClick={() => updateWorkflowStage(stage)}
-                            type="button"
-                          >
-                            Move to Stage
-                          </button>
-                        )
-                      ) : (
-                        <span className="empty-state">View-only access</span>
-                      )}
-                    </article>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            <p className="empty-state">Select an application to manage workflow stages.</p>
-          )}
-        </article>
-
-        <div style={{ display: "grid", gap: "1.5rem" }}>
-          {showQuotation ? (
-            <article className="panel">
-              <div className="panel__header">
-                <div>
-                  <h3>Quotation Template</h3>
-                  <p>Preview destination pricing before sending the quotation to the customer.</p>
-                </div>
-              </div>
-
-              {selectedApplication ? (
-                <>
-                  <QuotationTemplate
-                    application={quotationApplication}
-                    selectedApplication={selectedQuotationApplication}
-                    onClose={() => setShowQuotation(false)}
-                  />
-
-                  {invoiceLoading ? (
-                    <article className="placeholder-card">
-                      <span className="profile-card__eyebrow">Invoice Status</span>
-                      <strong>Generating invoice preview...</strong>
-                      <p>We are fetching the latest invoice details from the backend.</p>
-                    </article>
-                  ) : null}
-
-                  {invoiceError ? <p className="form-error">{invoiceError}</p> : null}
-
-                  {invoiceData ? (
-                    <InvoicePreview
-                      application={selectedQuotationApplication ?? quotationApplication}
-                      invoiceData={invoiceData}
-                    />
-                  ) : null}
-                </>
-              ) : (
-                <p className="empty-state">Select an application to generate a quotation.</p>
-              )}
-            </article>
-          ) : null}
-
-          <article className="panel">
-            <div className="panel__header">
-              <div>
-                <h3>Document Checklist</h3>
-                <p>Checklist is generated automatically from the selected visa type.</p>
-              </div>
-            </div>
-
-            {selectedApplication ? (
-              <>
-                {missingDocuments.length > 0 ? (
-                  <article className="alert-card alert-card--warning">
-                    <span className="alert-card__eyebrow">Missing Documents Alert</span>
-                    <strong>{missingDocuments.join(", ")}</strong>
-                  </article>
-                ) : (
-                  <article className="alert-card alert-card--info">
-                    <span className="alert-card__eyebrow">Checklist Complete</span>
-                    <strong>All required documents are available for this application.</strong>
-                  </article>
-                )}
-
-                <div className="cards-grid">
-                  {requiredDocuments.map((documentName) => {
-                    const isMissing = missingDocuments.includes(documentName);
-
-                    return (
-                      <article className="placeholder-card" key={documentName}>
-                        <span className="profile-card__eyebrow">Required Document</span>
-                        <strong>{documentName}</strong>
-                        <StatusPill label={isMissing ? "Missing" : "Uploaded"} />
-                      </article>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <p className="empty-state">Select an application to review its checklist.</p>
-            )}
-          </article>
-        </div>
       </section>
 
       <Modal isOpen={showNewModal} onClose={() => setShowNewModal(false)} title="New Application">

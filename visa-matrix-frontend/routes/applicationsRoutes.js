@@ -27,8 +27,6 @@ router.post(
 
 router.get(
   "/applications/:id",
-  authMiddleware,
-  permissionMiddleware("invoicing", "view"),
   asyncHandler(getApplicationHandler),
 );
 

@@ -5,7 +5,7 @@ import { supabase } from "../supabase";
 const AuthContext = createContext(null);
 
 const AUTH_STORAGE_KEY = "visa-matrix-auth";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
 const fallbackRoles = ["admin", "manager", "agent", "external_user"];
 const fallbackModules = {
   settings: ["view", "create", "edit", "delete", "approve"],

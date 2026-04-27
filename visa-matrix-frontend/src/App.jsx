@@ -22,7 +22,9 @@ import HRRecruitmentWorkspace from "./Pages/HRRecruitmentWorkspace";
 import HRWorkflowWorkspace from "./Pages/HRWorkflowWorkspace";
 import Payments from "./Pages/Payments";
 import Reports from "./Pages/Reports";
+import ApplicationDetail from "./Pages/ApplicationDetail";
 import Login from "./pages/Login";
+import QuotationPage from "./Pages/QuotationPage";
 import Signup from "./pages/Signup";
 import Tasks from "./Pages/Tasks";
 import VisaQuestionFlow from "./Pages/VisaQuestionFlow";
@@ -76,6 +78,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Applications />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/applications/:id"
+            element={
+              <ProtectedRoute>
+                <ApplicationDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/applications/:id/quotation"
+            element={
+              <ProtectedRoute>
+                <QuotationPage />
               </ProtectedRoute>
             }
           />
