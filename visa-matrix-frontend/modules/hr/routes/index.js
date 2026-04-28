@@ -10,7 +10,21 @@ import workflowRoutes from "./workflowRoutes.js";
 
 const router = express.Router();
 
-router.use(authMiddleware);
+// Public routes that don't require authentication
+const publicRoutes = [
+  '/api/health',
+  '/api/auth/login',
+  '/api/auth/register'
+];
+
+// Conditional middleware: skip auth for public routes
+router.use((req, res, next) => {
+  if (publicRoutes.includes(req.path)) {
+    return next();
+  }
+  return authMiddleware(req, res, next);
+});
+
 router.use(employeeRoutes);
 router.use(leaveRoutes);
 router.use(selfServiceRoutes);
