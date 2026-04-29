@@ -39,6 +39,21 @@ export default function Applications() {
   const getApplicationDisplayId = (application) =>
     application?.applicationCode || application?.id || "";
 
+  // Fetch from backend API (no auth required for public route)
+  const loadApplicationsFromBackend = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/public/applications");
+      const result = await response.json();
+      if (result.success) {
+        return result.data || [];
+      }
+      throw new Error(result.message || "Failed to fetch");
+    } catch (err) {
+      console.error("Backend API error:", err);
+      throw err;
+    }
+  };
+
   const loadApplications = async (preferredApplicationId = "") => {
     const nextApplications = await fetchApplications();
     console.log("Applications:", nextApplications);
@@ -77,8 +92,9 @@ export default function Applications() {
       setError("");
 
       try {
-        const nextApplications = await fetchApplications();
-        console.log("Applications:", nextApplications);
+        // Use backend API instead of Supabase
+        const nextApplications = await loadApplicationsFromBackend();
+        console.log("Applications from backend:", nextApplications);
 
         if (!isMounted) {
           return;
@@ -94,7 +110,7 @@ export default function Applications() {
         if (isMounted) {
           setApplications([]);
           setCountries([]);
-          setError(loadError.message ?? "Unable to load applications from Supabase.");
+          setError(loadError.message ?? "Unable to load applications from backend.");
         }
       } finally {
         if (isMounted) {
