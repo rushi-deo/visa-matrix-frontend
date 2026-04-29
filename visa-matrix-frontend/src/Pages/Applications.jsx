@@ -42,7 +42,9 @@ export default function Applications() {
   // Fetch from backend API (no auth required for public route)
   const loadApplicationsFromBackend = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/public/applications");
+      const response = await fetch(
+        "http://localhost:5000/api/public/applications",
+      );
       const result = await response.json();
       if (result.success) {
         return result.data || [];
@@ -110,7 +112,9 @@ export default function Applications() {
         if (isMounted) {
           setApplications([]);
           setCountries([]);
-          setError(loadError.message ?? "Unable to load applications from backend.");
+          setError(
+            loadError.message ?? "Unable to load applications from backend.",
+          );
         }
       } finally {
         if (isMounted) {
@@ -128,7 +132,9 @@ export default function Applications() {
   }, []);
 
   const scopedApplications = useMemo(() => {
-    const normalizedApplications = applications.map(normalizeApplicationWorkflow);
+    const normalizedApplications = applications.map(
+      normalizeApplicationWorkflow,
+    );
 
     if (currentUser?.role === "admin" || currentUser?.role === "manager") {
       return normalizedApplications;
@@ -164,7 +170,11 @@ export default function Applications() {
 
   const pageSize = 5;
   const pageCount = getPageCount(filteredApplications, pageSize);
-  const visibleApplications = paginateRows(filteredApplications, page, pageSize);
+  const visibleApplications = paginateRows(
+    filteredApplications,
+    page,
+    pageSize,
+  );
 
   const handleCreateApplication = async (values) => {
     if (!canAccess("invoicing", "create")) {
@@ -178,7 +188,10 @@ export default function Applications() {
     };
 
     try {
-      const persistedApplication = await createApplicationRequest(newApplication, currentUser);
+      const persistedApplication = await createApplicationRequest(
+        newApplication,
+        currentUser,
+      );
       console.log("Application insert confirmed:", persistedApplication);
       await loadApplications(persistedApplication.id ?? newApplication.id);
       setError("");
@@ -190,10 +203,12 @@ export default function Applications() {
     }
   };
 
-  const finalCountries = countries && countries.length > 0 ? countries : fallbackCountries;
+  const finalCountries =
+    countries && countries.length > 0 ? countries : fallbackCountries;
   const countryOptions = finalCountries
     .map((country) => ({
-      code: country.code ?? country.country_code ?? country.name ?? country.country,
+      code:
+        country.code ?? country.country_code ?? country.name ?? country.country,
       name: country.name ?? country.country ?? country.code ?? "",
     }))
     .filter((country) => country.code && country.name);
@@ -206,7 +221,11 @@ export default function Applications() {
         description="Track every application from draft intake through document collection, filing, embassy processing, and outcome."
         action={
           canAccess("invoicing", "create") ? (
-            <button className="primary-button" onClick={() => setShowNewModal(true)} type="button">
+            <button
+              className="primary-button"
+              onClick={() => setShowNewModal(true)}
+              type="button"
+            >
               New Application
             </button>
           ) : null
@@ -217,7 +236,9 @@ export default function Applications() {
         <div className="panel__header panel__header--stacked">
           <div>
             <h3>Application Tracking</h3>
-            <p>Filter active cases and open a file to view application details.</p>
+            <p>
+              Filter active cases and open a file to view application details.
+            </p>
           </div>
         </div>
 
@@ -245,13 +266,18 @@ export default function Applications() {
               value={statusFilter}
             >
               <option value="All">All</option>
-              {["Lead", "Documents Pending", "Submitted", "Processing", "Approved", "Rejected"].map(
-                (status) => (
+              {[
+                "Lead",
+                "Documents Pending",
+                "Submitted",
+                "Processing",
+                "Approved",
+                "Rejected",
+              ].map((status) => (
                 <option key={status} value={status}>
                   {status}
                 </option>
-                ),
-              )}
+              ))}
             </select>
           </label>
         </div>
@@ -292,7 +318,11 @@ export default function Applications() {
               ),
             },
           ]}
-          emptyMessage={pageLoading ? "Loading applications..." : "No applications match the current filters."}
+          emptyMessage={
+            pageLoading
+              ? "Loading applications..."
+              : "No applications match the current filters."
+          }
           onRowClick={(row) => navigate(`/applications/${row.id}`)}
           rowKey="id"
           rows={visibleApplications}
@@ -301,14 +331,22 @@ export default function Applications() {
         {error && !showNewModal ? <p className="form-error">{error}</p> : null}
         <TablePagination
           itemLabel="applications"
-          onNext={() => setPage((currentPage) => Math.min(pageCount, currentPage + 1))}
-          onPrevious={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
+          onNext={() =>
+            setPage((currentPage) => Math.min(pageCount, currentPage + 1))
+          }
+          onPrevious={() =>
+            setPage((currentPage) => Math.max(1, currentPage - 1))
+          }
           page={page}
           pageCount={pageCount}
         />
       </section>
 
-      <Modal isOpen={showNewModal} onClose={() => setShowNewModal(false)} title="New Application">
+      <Modal
+        isOpen={showNewModal}
+        onClose={() => setShowNewModal(false)}
+        title="New Application"
+      >
         {loading ? <p>Loading...</p> : null}
         {error ? <p className="form-error">{error}</p> : null}
         <NewApplicationForm
