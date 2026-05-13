@@ -4,8 +4,7 @@ import DataTable from "../components/DataTable";
 import PageHeader from "../components/PageHeader";
 import DashboardLayout from "../layout/DashboardLayout";
 import { useAuth } from "../context/AuthContext";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
+import { apiRequest } from "../services/api";
 
 const fallbackLogs = [
   {
@@ -27,7 +26,7 @@ const fallbackLogs = [
 ];
 
 export default function AuditLogs() {
-  const { token, currentUser } = useAuth();
+  const { currentUser } = useAuth();
   const [logs, setLogs] = useState(fallbackLogs);
   const [moduleFilter, setModuleFilter] = useState("");
 
@@ -36,19 +35,15 @@ export default function AuditLogs() {
 
     const loadLogs = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/audit-logs`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const result = await apiRequest("/audit-logs");
+        const payload = result.data;
 
-        if (!response.ok) {
-          throw new Error("Failed to load audit logs.");
+        if (!result.success) {
+          throw new Error(result.error || "Failed to load audit logs.");
         }
 
-        const payload = await response.json();
         if (isMounted) {
-          setLogs(payload.data);
+          setLogs(Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : []);
         }
       } catch {
         if (isMounted) {
@@ -68,10 +63,13 @@ export default function AuditLogs() {
     return () => {
       isMounted = false;
     };
-  }, [currentUser?.organization_id, currentUser?.role, token]);
+  }, [currentUser?.organization_id, currentUser?.role]);
 
   const filteredLogs = useMemo(
-    () => logs.filter((entry) => !moduleFilter || entry.module === moduleFilter),
+    () =>
+      (Array.isArray(logs) ? logs : []).filter(
+        (entry) => !moduleFilter || entry.module === moduleFilter,
+      ),
     [logs, moduleFilter],
   );
 
@@ -93,7 +91,7 @@ export default function AuditLogs() {
             <span>Module</span>
             <select onChange={(event) => setModuleFilter(event.target.value)} value={moduleFilter}>
               <option value="">All modules</option>
-              {[...new Set(logs.map((entry) => entry.module))].map((moduleName) => (
+              {[...new Set((Array.isArray(logs) ? logs : []).map((entry) => entry.module))].map((moduleName) => (
                 <option key={moduleName} value={moduleName}>
                   {moduleName}
                 </option>

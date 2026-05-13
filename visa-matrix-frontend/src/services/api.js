@@ -1,7 +1,66 @@
 import { normalizeVisaType } from "../utils/visaType";
+import { supabase } from "../supabase";
 import apiClient, { extractResponseData } from "./apiClient";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ??
+  import.meta.env.VITE_API_BASE_URL ??
+  "http://localhost:5000/api";
+
+export const apiRequest = async (endpoint, options = {}) => {
+  try {
+    const {
+      data: { session },
+    } = supabase ? await supabase.auth.getSession() : { data: { session: null } };
+
+    const token = session?.access_token;
+    const headers = {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    let data = [];
+
+    try {
+      data = await response.json();
+    } catch {
+      data = [];
+    }
+
+    if (!response.ok) {
+      return {
+        success: false,
+        status: response.status,
+        data: [],
+        error: data?.error || "Request failed",
+      };
+    }
+
+    return {
+      success: true,
+      status: response.status,
+      data,
+    };
+  } catch (error) {
+    console.error("API Request Error:", error);
+
+    return {
+      success: false,
+      status: 500,
+      data: [],
+      error: error.message,
+    };
+  }
+};
 
 const extractCollection = (payload) => {
   if (Array.isArray(payload)) {
@@ -62,13 +121,8 @@ const normalizeCustomer = (customer = {}) => ({
 
 export const fetchLeads = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/leads`);
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch leads");
-    }
-
-    const payload = await response.json();
+    const result = await apiRequest("/leads");
+    const payload = result.success ? result.data : [];
 
     return extractCollection(payload)
       .map(normalizeLead)
@@ -83,13 +137,8 @@ export const fetchLeads = async () => {
 
 export const fetchCustomers = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/customers`);
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch customers");
-    }
-
-    const payload = await response.json();
+    const result = await apiRequest("/customers");
+    const payload = result.success ? result.data : [];
 
     return extractCollection(payload).map(normalizeCustomer);
   } catch (error) {

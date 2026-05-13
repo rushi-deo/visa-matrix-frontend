@@ -55,20 +55,23 @@ export default function Documents() {
           return;
         }
 
-        setApplications(nextApplications);
-        setDocuments(nextDocuments);
+        const safeNextApplications = Array.isArray(nextApplications) ? nextApplications : [];
+        const safeNextDocuments = Array.isArray(nextDocuments) ? nextDocuments : [];
+
+        setApplications(safeNextApplications);
+        setDocuments(safeNextDocuments);
         setSelectedApplicationId((currentId) =>
-          nextApplications.some((application) => application.id === currentId)
+          safeNextApplications.some((application) => application.id === currentId)
             ? currentId
-            : nextApplications[0]?.id ?? "",
+            : safeNextApplications[0]?.id ?? "",
         );
         setUploadState((currentState) => ({
           ...currentState,
           applicationId:
-            nextApplications.find(
+            safeNextApplications.find(
               (application) => application.id === currentState.applicationId,
             )?.id ??
-            nextApplications[0]?.id ??
+            safeNextApplications[0]?.id ??
             "",
         }));
         setUploadError("");
@@ -94,22 +97,26 @@ export default function Documents() {
     };
   }, []);
 
-  const checklistCatalog = fallbackChecklistCatalog;
+  const checklistCatalog = Array.isArray(fallbackChecklistCatalog)
+    ? fallbackChecklistCatalog
+    : [];
   const checklists = fallbackVisaDocumentChecklists;
+  const safeApplications = Array.isArray(applications) ? applications : [];
+  const safeDocuments = Array.isArray(documents) ? documents : [];
   const selectedApplication =
-    applications.find((application) => application.id === selectedApplicationId) ??
-    applications[0];
+    safeApplications.find((application) => application.id === selectedApplicationId) ??
+    safeApplications[0];
   const requiredDocuments = getChecklistForVisaType(
     selectedApplication?.visaType,
     checklists,
   );
   const missingDocuments = getMissingDocuments(
     selectedApplication,
-    documents,
+    safeDocuments,
     checklists,
   );
 
-  const filteredDocuments = documents.filter((document) => {
+  const filteredDocuments = safeDocuments.filter((document) => {
     const matchesSearch = [
       document.documentName,
       document.applicationId,
@@ -221,7 +228,7 @@ export default function Documents() {
                 onChange={(event) => setSelectedApplicationId(event.target.value)}
                 value={selectedApplicationId}
               >
-                {applications.map((application) => (
+                {safeApplications.map((application) => (
                   <option key={application.id} value={application.id}>
                     {application.id} - {application.customerName}
                   </option>
@@ -304,7 +311,7 @@ export default function Documents() {
               value={applicationFilter}
             >
               <option value="All">All Applications</option>
-              {applications.map((application) => (
+              {safeApplications.map((application) => (
                 <option key={application.id} value={application.id}>
                   {application.id}
                 </option>
@@ -346,7 +353,7 @@ export default function Documents() {
                 }
                 value={uploadState.applicationId}
               >
-                {applications.map((application) => (
+                {safeApplications.map((application) => (
                   <option key={application.id} value={application.id}>
                     {application.id} - {application.customerName}
                   </option>

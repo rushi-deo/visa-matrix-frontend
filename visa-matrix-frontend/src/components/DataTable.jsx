@@ -7,6 +7,9 @@ export default function DataTable({
   caption,
   onRowClick,
 }) {
+  const safeColumns = Array.isArray(columns) ? columns : [];
+  const safeRows = Array.isArray(rows) ? rows : [];
+
   const resolveRowKey = (row, index) => {
     if (typeof rowKey === "function") {
       return rowKey(row, index);
@@ -21,14 +24,14 @@ export default function DataTable({
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead>
           <tr>
-            {columns.map((column) => (
+            {safeColumns.map((column) => (
               <th key={column.key}>{column.label}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {rows.length > 0 ? (
-            rows.map((row, index) => (
+          {safeRows.length > 0 ? (
+            safeRows.map((row, index) => (
               <tr
                 className={onRowClick ? "data-table__row--clickable" : undefined}
                 key={resolveRowKey(row, index)}
@@ -46,7 +49,7 @@ export default function DataTable({
                 role={onRowClick ? "button" : undefined}
                 tabIndex={onRowClick ? 0 : undefined}
               >
-                {columns.map((column) => (
+                {safeColumns.map((column) => (
                   <td key={column.key}>
                     {column.render ? column.render(row) : row[column.key]}
                   </td>
@@ -55,7 +58,7 @@ export default function DataTable({
             ))
           ) : (
             <tr>
-              <td className="data-table__empty" colSpan={columns.length}>
+              <td className="data-table__empty" colSpan={safeColumns.length}>
                 {emptyMessage}
               </td>
             </tr>

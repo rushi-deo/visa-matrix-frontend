@@ -74,7 +74,7 @@ export const fetchCountriesFromDB = async () => {
     return null;
   }
 
-  return data.map((country) =>
+  return (Array.isArray(data) ? data : []).map((country) =>
     toLegacyCountryShape({
       id: country.id,
       name: country.name,
@@ -99,10 +99,11 @@ export const getAllCountries = async () => {
 
 export const getCountryOptions = async () => {
   const countries = await getAllCountries();
+  const safeCountries = Array.isArray(countries) ? countries : [];
 
   return {
-    countries,
-    countryOptions: [...new Set(countries.map((country) => country.country))],
+    countries: safeCountries,
+    countryOptions: [...new Set(safeCountries.map((country) => country.country))],
     visaTypeOptions: [...DB_VISA_TYPES],
   };
 };

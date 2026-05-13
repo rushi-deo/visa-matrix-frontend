@@ -52,7 +52,10 @@ export default function CRM() {
     loadLeads();
   }, []);
 
-  const filteredLeads = leads.filter((lead) => {
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  const safeCountries = Array.isArray(countries) ? countries : [];
+
+  const filteredLeads = safeLeads.filter((lead) => {
     const matchesSearch = [
       lead.leadName,
       lead.email,
@@ -72,7 +75,7 @@ export default function CRM() {
 
   const pageSize = 5;
   const pageCount = getPageCount(filteredLeads, pageSize);
-  const countryOptions = [...new Set(countries.map((country) => country.country))];
+  const countryOptions = [...new Set(safeCountries.map((country) => country.country))];
   const visaTypeOptions = DB_VISA_TYPES;
 
   const openScheduleModal = (lead) => {
@@ -220,7 +223,7 @@ export default function CRM() {
               value={statusFilter}
             >
               <option value="All">All</option>
-              {[...new Set(leads.map((lead) => lead.status))].map((status) => (
+              {[...new Set(safeLeads.map((lead) => lead.status))].map((status) => (
                 <option key={status} value={status}>
                   {status}
                 </option>

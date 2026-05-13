@@ -22,6 +22,7 @@ import {
 } from "../services/erpService";
 import { normalizeApplicationWorkflow } from "../utils/workflow";
 import { DB_VISA_TYPES } from "../utils/visaType";
+import { apiRequest } from "../services/api";
 
 export default function Applications() {
   const navigate = useNavigate();
@@ -41,19 +42,19 @@ export default function Applications() {
 
   // Fetch from backend API (no auth required for public route)
   const loadApplicationsFromBackend = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:5000/api/public/applications",
-      );
-      const result = await response.json();
-      if (result.success) {
-        return result.data || [];
+    const result = await apiRequest("/public/applications");
+    const payload = result.data;
+
+    if (result.success) {
+      if (Array.isArray(payload)) {
+        return payload;
       }
-      throw new Error(result.message || "Failed to fetch");
-    } catch (err) {
-      console.error("Backend API error:", err);
-      throw err;
+
+      return Array.isArray(payload?.data) ? payload.data : [];
     }
+
+    console.error("Backend API error:", result.error);
+    throw new Error(result.error || "Failed to fetch");
   };
 
   const loadApplications = async (preferredApplicationId = "") => {
@@ -132,7 +133,8 @@ export default function Applications() {
   }, []);
 
   const scopedApplications = useMemo(() => {
-    const normalizedApplications = applications.map(
+    const safeApplications = Array.isArray(applications) ? applications : [];
+    const normalizedApplications = safeApplications.map(
       normalizeApplicationWorkflow,
     );
 
@@ -203,8 +205,12 @@ export default function Applications() {
     }
   };
 
+  const safeCountries = Array.isArray(countries) ? countries : [];
+  const safeFallbackCountries = Array.isArray(fallbackCountries)
+    ? fallbackCountries
+    : [];
   const finalCountries =
-    countries && countries.length > 0 ? countries : fallbackCountries;
+    safeCountries.length > 0 ? safeCountries : safeFallbackCountries;
   const countryOptions = finalCountries
     .map((country) => ({
       code:

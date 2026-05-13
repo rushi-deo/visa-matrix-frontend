@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import PageHeader from "../components/PageHeader";
 import DashboardLayout from "../layout/DashboardLayout";
 import { useAuth } from "../context/AuthContext";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
+import { apiRequest } from "../services/api";
 
 const fallbackNotifications = [
   {
@@ -26,7 +25,7 @@ const fallbackNotifications = [
 ];
 
 export default function Communication() {
-  const { token, currentUser } = useAuth();
+  const { currentUser } = useAuth();
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
@@ -34,19 +33,15 @@ export default function Communication() {
 
     const loadNotifications = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/notifications`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const result = await apiRequest("/notifications");
+        const payload = result.data;
 
-        if (!response.ok) {
-          throw new Error("Failed to load notifications.");
+        if (!result.success) {
+          throw new Error(result.error || "Failed to load notifications.");
         }
 
-        const payload = await response.json();
         if (isMounted) {
-          setNotifications(payload.data);
+          setNotifications(Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : []);
         }
       } catch {
         if (isMounted) {
@@ -66,7 +61,7 @@ export default function Communication() {
     return () => {
       isMounted = false;
     };
-  }, [currentUser?.organization_id, currentUser?.role, token]);
+  }, [currentUser?.organization_id, currentUser?.role]);
 
   return (
     <DashboardLayout>
@@ -76,7 +71,7 @@ export default function Communication() {
       />
 
       <section className="cards-grid">
-        {notifications.map((notification) => (
+        {(Array.isArray(notifications) ? notifications : []).map((notification) => (
           <article className="message-thread" key={notification.id}>
             <span className="profile-card__eyebrow">{notification.module}</span>
             <div className="message-thread">

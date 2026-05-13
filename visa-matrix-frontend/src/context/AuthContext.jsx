@@ -1,11 +1,11 @@
 import React from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabase";
+import { apiRequest } from "../services/api";
 
 const AuthContext = createContext(null);
 
 const AUTH_STORAGE_KEY = "visa-matrix-auth";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
 const fallbackRoles = ["admin", "manager", "agent", "external_user"];
 const fallbackModules = {
   settings: ["view", "create", "edit", "delete", "approve"],
@@ -75,22 +75,6 @@ const fallbackUsers = [
 ];
 
 const buildPermissionMap = (role) => fallbackPermissions[role] ?? {};
-
-async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers ?? {}),
-    },
-    ...options,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
-  }
-
-  return response.json();
-}
 
 function getStoredSession() {
   if (typeof window === "undefined") {
@@ -230,7 +214,15 @@ export function AuthProvider({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      console.log("Auth Event:", event);
+
+      if (nextSession) {
+        console.log("Authenticated");
+      } else {
+        console.log("No Session");
+      }
+
       applySession(nextSession ?? null);
     });
 
@@ -267,9 +259,6 @@ export function AuthProvider({ children }) {
     try {
       await apiRequest("/access-control/role-permissions", {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           role,
           module: moduleName,
@@ -297,9 +286,6 @@ export function AuthProvider({ children }) {
     try {
       await apiRequest("/access-control/users/role", {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           userId,
           role,

@@ -44,7 +44,9 @@ export default function ApplicationForm({
   }, [initialValues]);
 
   const normalizedCountryOptions = useMemo(() => {
-    const finalCountries = countries && countries.length > 0 ? countries : countryOptions;
+    const safeCountries = Array.isArray(countries) ? countries : [];
+    const safeCountryOptions = Array.isArray(countryOptions) ? countryOptions : [];
+    const finalCountries = safeCountries.length > 0 ? safeCountries : safeCountryOptions;
     const options = finalCountries
       .map((country) =>
         typeof country === "string"
@@ -79,11 +81,13 @@ export default function ApplicationForm({
   }, [countries, countryOptions, values.destinationCountry]);
 
   const resolvedVisaTypeOptions = useMemo(() => {
-    if (!values.visaType || visaTypeOptions.includes(values.visaType)) {
-      return visaTypeOptions;
+    const safeVisaTypeOptions = Array.isArray(visaTypeOptions) ? visaTypeOptions : [];
+
+    if (!values.visaType || safeVisaTypeOptions.includes(values.visaType)) {
+      return safeVisaTypeOptions;
     }
 
-    return [...visaTypeOptions, values.visaType];
+    return [...safeVisaTypeOptions, values.visaType];
   }, [values.visaType, visaTypeOptions]);
 
   const selectedCountryCode =

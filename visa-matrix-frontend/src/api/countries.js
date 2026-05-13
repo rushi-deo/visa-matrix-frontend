@@ -1,23 +1,20 @@
-import axios from "axios";
+import { apiRequest } from "../services/api";
 
-// ✅ Base API URL (make sure backend is running on 3001)
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-// ✅ Axios instance (clean + scalable)
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// ✅ GET ALL COUNTRIES
+// GET ALL COUNTRIES
 export const fetchCountries = async () => {
   try {
-    const response = await api.get("/countries");
+    const result = await apiRequest("/countries");
+
+    if (!result.success) {
+      throw new Error(result.error || "Error fetching countries");
+    }
 
     // API returns: { success: true, data: [...] }
-    return response.data.data;
+    return Array.isArray(result.data)
+      ? result.data
+      : Array.isArray(result.data?.data)
+        ? result.data.data
+        : [];
   } catch (error) {
     console.error("Error fetching countries:", error);
     throw error;
