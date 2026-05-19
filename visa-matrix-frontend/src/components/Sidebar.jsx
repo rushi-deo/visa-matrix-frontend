@@ -143,7 +143,11 @@ export default function Sidebar() {
       <div className="sidebar__header">
         <Link className="sidebar__brand flex items-center gap-2" to="/">
           <span className="sidebar__brand-mark p-2 rounded-lg inline-block mb-8">
-            <img src="/logo.png" alt="Logo" className="h-12 w-auto object-contain" />
+            <img
+              src="/logo.png"
+              alt="Logo"
+              className="h-12 w-auto object-contain"
+            />
           </span>
         </Link>
       </div>
@@ -177,7 +181,10 @@ export default function Sidebar() {
       <div className="sidebar__footer">
         <span className="sidebar__footer-label">Operations Snapshot</span>
         <strong>Modern visa consultancy dashboard</strong>
-        <p>Track cases, payments, permissions, and agency access from one clean workspace.</p>
+        <p>
+          Track cases, payments, permissions, and agency access from one clean
+          workspace.
+        </p>
       </div>
     </aside>
   );

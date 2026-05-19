@@ -1,6 +1,16 @@
 export const navigationItems = [
-  { label: "Dashboard", path: "/dashboard", shortLabel: "Dashboard", module: "dashboard" },
-  { label: "Customers", path: "/customers", shortLabel: "Customers", module: "customers" },
+  {
+    label: "Dashboard",
+    path: "/dashboard",
+    shortLabel: "Dashboard",
+    module: "dashboard",
+  },
+  {
+    label: "Customers",
+    path: "/customers",
+    shortLabel: "Customers",
+    module: "customers",
+  },
   {
     label: "Visa Applications",
     path: "/applications",
@@ -13,15 +23,30 @@ export const navigationItems = [
     shortLabel: "Countries",
     module: "countries",
   },
-  { label: "Documents", path: "/documents", shortLabel: "Documents", module: "documents" },
+  {
+    label: "Documents",
+    path: "/documents",
+    shortLabel: "Documents",
+    module: "documents",
+  },
   {
     label: "Payments & Invoices",
     path: "/payments",
     shortLabel: "Payments",
     module: "invoicing",
   },
-  { label: "Notifications", path: "/communication", shortLabel: "Notifications", module: "notifications" },
-  { label: "Audit Logs", path: "/audit-logs", shortLabel: "Audit Logs", module: "audit_logs" },
+  {
+    label: "Notifications",
+    path: "/communication",
+    shortLabel: "Notifications",
+    module: "notifications",
+  },
+  {
+    label: "Audit Logs",
+    path: "/audit-logs",
+    shortLabel: "Audit Logs",
+    module: "audit_logs",
+  },
   {
     label: "Workflow Automation",
     path: "/workflow",
@@ -46,7 +71,17 @@ export const navigationItems = [
     shortLabel: "Reports",
     module: "reports",
   },
-  { label: "Admin Settings", path: "/admin", shortLabel: "Admin", module: "settings" },
+  {
+    label: "Admin Settings",
+    path: "/admin",
+    shortLabel: "Admin",
+    module: "settings",
+  },
   { label: "HR", path: "/hr/dashboard", shortLabel: "HR", module: "hr" },
-  { label: "Settings", path: "/settings", shortLabel: "Settings", module: "settings" },
+  {
+    label: "Settings",
+    path: "/settings",
+    shortLabel: "Settings",
+    module: "settings",
+  },
 ];
