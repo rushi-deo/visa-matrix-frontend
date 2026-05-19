@@ -18,7 +18,7 @@ import HRDashboardWorkspace from "./Pages/HRDashboardWorkspace";
 import HRDepartmentSetupWorkspace from "./Pages/HRDepartmentSetupWorkspace";
 import HREmployeesWorkspace from "./Pages/HREmployeesWorkspace";
 import HREmployeeProfileWorkspace from "./Pages/HREmployeeProfileWorkspace";
-import HRPlaceholderWorkspace from "./Pages/HRPlaceholderWorkspace";
+import HRPayrollWorkspace from "./Pages/HRPayrollWorkspace";
 import HRPerformanceWorkspace from "./Pages/HRPerformanceWorkspace";
 import HRRecruitmentWorkspace from "./Pages/HRRecruitmentWorkspace";
 import HRRolesPermissionsWorkspace from "./Pages/HRRolesPermissionsWorkspace";
@@ -128,7 +128,10 @@ export default function App() {
           <Route
             path="/hr"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr"]}
+              >
                 <HR />
               </ProtectedRoute>
             }
@@ -136,7 +139,10 @@ export default function App() {
           <Route
             path="/hr/dashboard"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr", "finance"]}>
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr", "finance"]}
+              >
                 <HRDashboardWorkspace />
               </ProtectedRoute>
             }
@@ -144,7 +150,10 @@ export default function App() {
           <Route
             path="/hr/employees"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr"]}
+              >
                 <HREmployeesWorkspace />
               </ProtectedRoute>
             }
@@ -152,7 +161,10 @@ export default function App() {
           <Route
             path="/hr/employees/:employeeId"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr"]}
+              >
                 <HREmployeeProfileWorkspace />
               </ProtectedRoute>
             }
@@ -160,15 +172,21 @@ export default function App() {
           <Route
             path="/hr/payroll"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr", "finance"]}>
-                <HRPlaceholderWorkspace title="Payroll" description="Payroll and salary management." />
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr", "finance"]}
+              >
+                <HRPayrollWorkspace />
               </ProtectedRoute>
             }
           />
           <Route
             path="/hr/roles-permissions"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr"]}
+              >
                 <HRRolesPermissionsWorkspace />
               </ProtectedRoute>
             }
@@ -176,23 +194,21 @@ export default function App() {
           <Route
             path="/hr/departments"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr"]}
+              >
                 <HRDepartmentSetupWorkspace />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/hr/attendance"
-            element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
-                <HRPlaceholderWorkspace title="Attendance" description="Attendance management module." />
               </ProtectedRoute>
             }
           />
           <Route
             path="/hr/audit-logs"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr"]}
+              >
                 <HRAuditLogsWorkspace />
               </ProtectedRoute>
             }
@@ -200,15 +216,21 @@ export default function App() {
           <Route
             path="/hr/settings"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr"]}
+              >
                 <HRSettingsWorkspace />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/hr/workflows"
+            path="/hr/workflow"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr"]}
+              >
                 <HRWorkflowWorkspace />
               </ProtectedRoute>
             }
@@ -216,7 +238,10 @@ export default function App() {
           <Route
             path="/hr/recruitment"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr"]}
+              >
                 <HRRecruitmentWorkspace />
               </ProtectedRoute>
             }
@@ -224,7 +249,10 @@ export default function App() {
           <Route
             path="/hr/performance"
             element={
-              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr"]}
+              >
                 <HRPerformanceWorkspace />
               </ProtectedRoute>
             }
@@ -281,7 +309,10 @@ export default function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute module="settings" allowedRoles={["super_admin", "admin"]}>
+              <ProtectedRoute
+                module="settings"
+                allowedRoles={["super_admin", "admin"]}
+              >
                 <Admin />
               </ProtectedRoute>
             }
@@ -289,7 +320,10 @@ export default function App() {
           <Route
             path="/settings"
             element={
-              <ProtectedRoute module="settings" allowedRoles={["super_admin", "admin"]}>
+              <ProtectedRoute
+                module="settings"
+                allowedRoles={["super_admin", "admin"]}
+              >
                 <Admin />
               </ProtectedRoute>
             }
