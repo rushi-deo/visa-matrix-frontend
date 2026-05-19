@@ -40,11 +40,11 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Navigate replace to="/dashboard" />} />
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="dashboard">
                 <Dashboard />
               </ProtectedRoute>
             }
@@ -52,7 +52,7 @@ export default function App() {
           <Route
             path="/crm"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="applications">
                 <Navigate replace to="/applications" />
               </ProtectedRoute>
             }
@@ -60,7 +60,7 @@ export default function App() {
           <Route
             path="/leads"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="applications">
                 <Navigate replace to="/applications" />
               </ProtectedRoute>
             }
@@ -68,7 +68,7 @@ export default function App() {
           <Route
             path="/customers"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="customers">
                 <Customers />
               </ProtectedRoute>
             }
@@ -76,7 +76,7 @@ export default function App() {
           <Route
             path="/applications"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="applications">
                 <Applications />
               </ProtectedRoute>
             }
@@ -84,7 +84,7 @@ export default function App() {
           <Route
             path="/applications/:id"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="applications">
                 <ApplicationDetail />
               </ProtectedRoute>
             }
@@ -92,7 +92,7 @@ export default function App() {
           <Route
             path="/applications/:id/quotation"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="invoicing">
                 <QuotationPage />
               </ProtectedRoute>
             }
@@ -100,7 +100,7 @@ export default function App() {
           <Route
             path="/countries"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="countries">
                 <Countries />
               </ProtectedRoute>
             }
@@ -108,7 +108,7 @@ export default function App() {
           <Route
             path="/documents"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="documents">
                 <Documents />
               </ProtectedRoute>
             }
@@ -124,7 +124,7 @@ export default function App() {
           <Route
             path="/hr"
             element={
-              <ProtectedRoute module="hr">
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
                 <HR />
               </ProtectedRoute>
             }
@@ -132,7 +132,7 @@ export default function App() {
           <Route
             path="/hr/dashboard"
             element={
-              <ProtectedRoute module="hr">
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr", "finance"]}>
                 <HRDashboardWorkspace />
               </ProtectedRoute>
             }
@@ -140,7 +140,7 @@ export default function App() {
           <Route
             path="/hr/employees"
             element={
-              <ProtectedRoute module="hr">
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
                 <HREmployeesWorkspace />
               </ProtectedRoute>
             }
@@ -148,7 +148,7 @@ export default function App() {
           <Route
             path="/hr/employees/:employeeId"
             element={
-              <ProtectedRoute module="hr">
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
                 <HREmployeeProfileWorkspace />
               </ProtectedRoute>
             }
@@ -156,7 +156,7 @@ export default function App() {
           <Route
             path="/hr/payroll"
             element={
-              <ProtectedRoute module="hr">
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr", "finance"]}>
                 <HRPayrollWorkspace />
               </ProtectedRoute>
             }
@@ -164,7 +164,7 @@ export default function App() {
           <Route
             path="/hr/workflows"
             element={
-              <ProtectedRoute module="hr">
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
                 <HRWorkflowWorkspace />
               </ProtectedRoute>
             }
@@ -172,7 +172,7 @@ export default function App() {
           <Route
             path="/hr/recruitment"
             element={
-              <ProtectedRoute module="hr">
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
                 <HRRecruitmentWorkspace />
               </ProtectedRoute>
             }
@@ -180,7 +180,7 @@ export default function App() {
           <Route
             path="/hr/performance"
             element={
-              <ProtectedRoute module="hr">
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
                 <HRPerformanceWorkspace />
               </ProtectedRoute>
             }
@@ -188,7 +188,7 @@ export default function App() {
           <Route
             path="/workflow"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="workflow">
                 <Workflow />
               </ProtectedRoute>
             }
@@ -196,7 +196,7 @@ export default function App() {
           <Route
             path="/visa-question-flow"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="visa_questions">
                 <VisaQuestionFlow />
               </ProtectedRoute>
             }
@@ -204,7 +204,7 @@ export default function App() {
           <Route
             path="/tasks"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="tasks">
                 <Tasks />
               </ProtectedRoute>
             }
@@ -228,7 +228,7 @@ export default function App() {
           <Route
             path="/reports"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="reports">
                 <Reports />
               </ProtectedRoute>
             }
@@ -237,7 +237,7 @@ export default function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute module="settings">
+              <ProtectedRoute module="settings" allowedRoles={["super_admin", "admin"]}>
                 <Admin />
               </ProtectedRoute>
             }
@@ -245,13 +245,13 @@ export default function App() {
           <Route
             path="/settings"
             element={
-              <ProtectedRoute module="settings">
+              <ProtectedRoute module="settings" allowedRoles={["super_admin", "admin"]}>
                 <Admin />
               </ProtectedRoute>
             }
           />
           <Route path="/signup" element={<Signup />} />
-          <Route path="*" element={<Dashboard />} />
+          <Route path="*" element={<Navigate replace to="/dashboard" />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

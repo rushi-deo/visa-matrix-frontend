@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { signInUser } from "../services/authService";
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentUser, loading } = useAuth();
+  const { currentUser, loading, login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const redirectPath = location.state?.from?.pathname ?? "/applications";
 
@@ -21,13 +21,19 @@ export default function Login() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setErrorMessage("");
     setIsSubmitting(true);
 
     try {
-      await signInUser({ email, password });
+      await login({ email, password });
       navigate(redirectPath, { replace: true });
     } catch (error) {
-      alert(error.message || "Unable to sign in.");
+      setErrorMessage(
+        error?.response?.data?.message ??
+          error?.response?.data?.error ??
+          error.message ??
+          "Unable to sign in.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -85,6 +91,12 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit}>
+            {errorMessage ? (
+              <div className="alert-card alert-card--danger" style={{ marginBottom: "14px" }}>
+                <strong>{errorMessage}</strong>
+              </div>
+            ) : null}
+
             <div style={{ marginBottom: "14px" }}>
               <input
                 type="email"

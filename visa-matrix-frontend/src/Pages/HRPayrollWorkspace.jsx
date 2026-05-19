@@ -8,7 +8,7 @@ import HrWorkspaceLayout from "../features/hr/components/HrWorkspaceLayout";
 import { useHrResource } from "../features/hr/hooks/useHrResource";
 
 export default function HRPayrollWorkspace() {
-  const { currentUser } = useAuth();
+  const { canAccess } = useAuth();
   const [processing, setProcessing] = useState(false);
   const { data, error, loading, reload } = useHrResource(() => hrWorkspaceApi.getPayrollLogs(), []);
 
@@ -29,7 +29,7 @@ export default function HRPayrollWorkspace() {
       title="Payroll Console"
       description="Payroll processing, audit-ready logs, and payslip-ready output."
       action={
-        ["admin", "finance", "manager"].includes(currentUser?.role) ? (
+        canAccess("hr", "edit") || canAccess("invoicing", "approve") ? (
           <button className="primary-button" type="button" disabled={processing} onClick={handleProcessPayroll}>
             {processing ? "Processing..." : "Run Monthly Payroll"}
           </button>
@@ -63,4 +63,3 @@ export default function HRPayrollWorkspace() {
     </HrWorkspaceLayout>
   );
 }
-

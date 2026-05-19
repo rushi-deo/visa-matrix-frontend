@@ -1,9 +1,10 @@
 import axios from "axios";
-
-const AUTH_STORAGE_KEY = "visa-matrix-auth";
+import { AUTH_STORAGE_KEY } from "../data/accessControl";
 
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api";
+  import.meta.env.VITE_API_BASE_URL ??
+  import.meta.env.VITE_API_URL ??
+  "http://localhost:5000/api";
 
 export const API_ENDPOINTS = {
   applications: "/applications",
@@ -27,6 +28,14 @@ function getStoredToken() {
   } catch {
     return "";
   }
+}
+
+export function clearStoredAuthSession() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(AUTH_STORAGE_KEY);
 }
 
 export function extractResponseData(response) {
@@ -74,7 +83,17 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error),
+  (error) => {
+    if (error?.response?.status === 401) {
+      clearStoredAuthSession();
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("visa-matrix:auth-expired"));
+      }
+    }
+
+    return Promise.reject(error);
+  },
 );
 
 export default apiClient;

@@ -138,16 +138,6 @@ export default function Applications() {
       normalizeApplicationWorkflow,
     );
 
-    if (currentUser?.role === "admin" || currentUser?.role === "manager") {
-      return normalizedApplications;
-    }
-
-    if (currentUser?.role === "external_user") {
-      return normalizedApplications.filter((application) =>
-        application.customerName.toLowerCase().includes("nexa"),
-      );
-    }
-
     return normalizedApplications;
   }, [applications, currentUser?.role]);
 
@@ -179,7 +169,7 @@ export default function Applications() {
   );
 
   const handleCreateApplication = async (values) => {
-    if (!canAccess("invoicing", "create")) {
+    if (!canAccess("applications", "create")) {
       return;
     }
 
@@ -226,7 +216,7 @@ export default function Applications() {
         title="Visa Applications"
         description="Track every application from draft intake through document collection, filing, embassy processing, and outcome."
         action={
-          canAccess("invoicing", "create") ? (
+          canAccess("applications", "create") ? (
             <button
               className="primary-button"
               onClick={() => setShowNewModal(true)}

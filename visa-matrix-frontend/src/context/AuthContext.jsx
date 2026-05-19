@@ -1,331 +1,490 @@
 import React from "react";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { supabase } from "../supabase";
-import { apiRequest } from "../services/api";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  AUTH_STORAGE_KEY,
+  ERP_MODULES,
+  ERP_ROLES,
+  ROLE_PERMISSIONS,
+  hasModulePermission,
+} from "../data/accessControl";
+import { loginUser } from "../services/authService";
+import {
+  fetchAdminPermissions,
+  fetchAdminRoles,
+  fetchAdminUsers,
+  fetchCurrentAccessProfile,
+  fetchRolePermissions,
+  updateRolePermissions,
+  updateUserRole,
+  updateUserStatus,
+} from "../services/adminService";
 
 const AuthContext = createContext(null);
-
-const AUTH_STORAGE_KEY = "visa-matrix-auth";
-const fallbackRoles = ["admin", "manager", "agent", "external_user"];
-const fallbackModules = {
-  settings: ["view", "create", "edit", "delete", "approve"],
-  hr: ["view", "create", "edit", "delete", "approve"],
-  invoicing: ["view", "create", "edit", "delete", "approve"],
-  notifications: ["view", "create", "edit", "delete"],
-  audit_logs: ["view"],
+const PERMISSION_ALIASES = {
+  invoicing: ["invoices", "payments"],
+  invoices: ["invoicing"],
+  payments: ["invoicing"],
+  notifications: ["communications"],
+  communications: ["notifications"],
+  workflow: ["workflows"],
+  workflows: ["workflow"],
 };
 
-const fallbackPermissions = {
-  admin: fallbackModules,
-  manager: {
-    settings: ["view"],
-    hr: ["view", "edit", "approve"],
-    invoicing: ["view", "create", "edit", "approve"],
-    notifications: ["view", "create"],
-    audit_logs: ["view"],
-  },
-  agent: {
-    hr: ["view"],
-    invoicing: ["view", "create"],
-    notifications: ["view"],
-  },
-  external_user: {
-    invoicing: ["view"],
-    notifications: ["view"],
-  },
-};
+const normalizeRoleKey = (role = "") =>
+  String(role)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
 
-const fallbackUsers = [
-  {
-    id: "USR-ADMIN-1",
-    name: "Aarav Admin",
-    email: "admin@visamatrix.local",
-    role: "admin",
-    organization_id: "ORG-INTERNAL",
-    organization_name: "Visa Matrix Internal",
-    is_external: false,
-  },
-  {
-    id: "USR-MANAGER-1",
-    name: "Meera Manager",
-    email: "manager@visamatrix.local",
-    role: "manager",
-    organization_id: "ORG-INTERNAL",
-    organization_name: "Visa Matrix Internal",
-    is_external: false,
-  },
-  {
-    id: "USR-AGENT-1",
-    name: "Rohan Agent",
-    email: "agent@visamatrix.local",
-    role: "agent",
-    organization_id: "ORG-INTERNAL",
-    organization_name: "Visa Matrix Internal",
-    is_external: false,
-  },
-  {
-    id: "USR-EXT-1",
-    name: "Nexa Travels",
-    email: "agency@visamatrix.local",
-    role: "external_user",
-    organization_id: "ORG-AGENCY-1",
-    organization_name: "Nexa Travels",
-    is_external: true,
-  },
-];
+const permissionName = (moduleName, action) => `${moduleName}:${action}`;
 
-const buildPermissionMap = (role) => fallbackPermissions[role] ?? {};
+function buildPermissionMap(roles, rolePermissionPayloads) {
+  return roles.reduce((permissionMap, role) => {
+    const roleKey = role.name ?? role.code ?? role.id;
+    const normalizedRoleKey = normalizeRoleKey(roleKey);
+    const permissions = rolePermissionPayloads[role.id] ?? [];
 
-function getStoredSession() {
+    const moduleActions = permissions.reduce((nextMap, permission) => {
+      if (!permission?.module || !permission?.action) {
+        return nextMap;
+      }
+
+      nextMap[permission.module] = [
+        ...new Set([...(nextMap[permission.module] ?? []), permission.action]),
+      ];
+      return nextMap;
+    }, {});
+
+    return {
+      ...permissionMap,
+      [roleKey]: moduleActions,
+      [normalizedRoleKey]: moduleActions,
+    };
+  }, {});
+}
+
+function normalizeUser(user = {}) {
+  const emailPrefix = user.email?.split("@")[0] ?? "visa-matrix-user";
+
+  return {
+    id: user.id ?? user.user_id ?? emailPrefix,
+    name: user.name ?? user.full_name ?? user.email ?? emailPrefix,
+    email: user.email ?? "",
+    role: user.role ?? "counselor",
+    roleId: user.roleId ?? user.role_id ?? null,
+    permissions: Array.isArray(user.permissions) ? user.permissions : [],
+    organization_id: user.organization_id ?? user.organizationId ?? "visa-matrix",
+    organization_name: user.organization_name ?? user.organizationName ?? "Visa Matrix",
+    is_external: user.is_external ?? user.isExternal ?? false,
+    ...user,
+  };
+}
+
+function readStoredSession() {
   if (typeof window === "undefined") {
     return null;
   }
 
   try {
     const rawSession = window.localStorage.getItem(AUTH_STORAGE_KEY);
-    return rawSession ? JSON.parse(rawSession) : null;
+    const session = rawSession ? JSON.parse(rawSession) : null;
+
+    if (!session?.token || !session?.user) {
+      return null;
+    }
+
+    return {
+      token: session.token,
+      user: normalizeUser(session.user),
+    };
   } catch {
     return null;
   }
 }
 
-function setStoredSession(nextSession) {
+function persistSession(nextSession) {
   if (typeof window === "undefined") {
     return;
   }
 
-  try {
-    if (!nextSession?.token) {
-      window.localStorage.removeItem(AUTH_STORAGE_KEY);
-      return;
-    }
-
-    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
-  } catch {
-    // Local persistence is optional; auth state still lives in memory.
-  }
-}
-
-function buildCurrentUser(authUser) {
-  if (!authUser) {
-    return null;
+  if (!nextSession?.token || !nextSession?.user) {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    return;
   }
 
-  const matchedUser = fallbackUsers.find((user) => user.email === authUser.email);
-  const metadata = authUser.user_metadata ?? {};
-  const emailPrefix = authUser.email?.split("@")[0] ?? "visa-matrix-user";
-
-  return {
-    id: authUser.id ?? matchedUser?.id ?? emailPrefix,
-    name: metadata.full_name ?? metadata.name ?? matchedUser?.name ?? emailPrefix,
-    email: authUser.email ?? matchedUser?.email ?? "",
-    role: metadata.role ?? matchedUser?.role ?? "agent",
-    organization_id:
-      metadata.organization_id ?? matchedUser?.organization_id ?? "ORG-INTERNAL",
-    organization_name:
-      metadata.organization_name ?? matchedUser?.organization_name ?? "Visa Matrix",
-    is_external: metadata.is_external ?? matchedUser?.is_external ?? false,
-  };
-}
-
-function mergeUsers(existingUsers, nextUser) {
-  if (!nextUser) {
-    return existingUsers;
-  }
-
-  const userExists = existingUsers.some((user) => user.email === nextUser.email);
-
-  if (!userExists) {
-    return [nextUser, ...existingUsers];
-  }
-
-  return existingUsers.map((user) =>
-    user.email === nextUser.email ? { ...user, ...nextUser } : user,
-  );
+  window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
 }
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [user, setUserState] = useState(null);
   const [token, setToken] = useState("");
-  const [users, setUsers] = useState(fallbackUsers);
-  const [rolePermissions, setRolePermissions] = useState(fallbackPermissions);
   const [loading, setLoading] = useState(true);
+  const [rolePermissions, setRolePermissions] = useState(ROLE_PERMISSIONS);
+  const [rbacRoles, setRbacRoles] = useState([]);
+  const [allPermissions, setAllPermissions] = useState([]);
+  const [managedUsers, setManagedUsers] = useState([]);
 
-  const setUser = (nextUser) => {
-    setCurrentUser(nextUser);
-    setUsers((previousUsers) => mergeUsers(previousUsers, nextUser));
-    setStoredSession({
-      ...(getStoredSession() ?? {}),
-      token,
-      user: nextUser,
+  const applySession = useCallback((nextSession) => {
+    if (!nextSession?.token || !nextSession?.user) {
+      setUserState(null);
+      setToken("");
+      setManagedUsers([]);
+      persistSession(null);
+      return;
+    }
+
+    const nextUser = normalizeUser(nextSession.user);
+
+    setUserState(nextUser);
+    setToken(nextSession.token);
+    setManagedUsers((previousUsers) => {
+      const withoutCurrent = previousUsers.filter((item) => item.id !== nextUser.id);
+      return [nextUser, ...withoutCurrent];
     });
-  };
+    persistSession({ token: nextSession.token, user: nextUser });
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
+    applySession(readStoredSession());
+    setLoading(false);
 
-    const applySession = (nextSession) => {
-      if (!isMounted) {
+    const handleExpiredSession = () => {
+      applySession(null);
+    };
+
+    window.addEventListener("visa-matrix:auth-expired", handleExpiredSession);
+
+    return () => {
+      window.removeEventListener("visa-matrix:auth-expired", handleExpiredSession);
+    };
+  }, [applySession]);
+
+  useEffect(() => {
+    if (!token || !user) {
+      setRbacRoles([]);
+      setAllPermissions([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadAccessProfile() {
+      try {
+        const profile = await fetchCurrentAccessProfile();
+
+        if (!cancelled && profile) {
+          applySession({
+            token,
+            user: {
+              ...user,
+              ...profile,
+              id: profile.id ?? profile.userId ?? user.id,
+              roleId: profile.roleId ?? user.roleId,
+            },
+          });
+        }
+      } catch {
+        // Keep the signed-in session usable when the admin profile endpoint is unavailable.
+      }
+    }
+
+    loadAccessProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || !user) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadRbacData() {
+      try {
+        const [roles, permissions] = await Promise.all([
+          fetchAdminRoles(),
+          fetchAdminPermissions(),
+        ]);
+        const rolePermissionEntries = await Promise.all(
+          roles.map(async (role) => {
+            const payload = await fetchRolePermissions(role.id);
+            return [role.id, payload?.permissions ?? []];
+          }),
+        );
+        const rolePermissionPayloads = Object.fromEntries(rolePermissionEntries);
+
+        if (!cancelled) {
+          setRbacRoles(roles);
+          setAllPermissions(permissions);
+          setRolePermissions((previousPermissions) => ({
+            ...previousPermissions,
+            ...buildPermissionMap(roles, rolePermissionPayloads),
+          }));
+        }
+      } catch {
+        // Static fallbacks are intentionally kept until the RBAC tables are seeded.
+      }
+
+      try {
+        const result = await fetchAdminUsers();
+
+        if (!cancelled) {
+          setManagedUsers(result.items);
+        }
+      } catch {
+        // Non-admin users may not be allowed to list users; keep local session user.
+      }
+    }
+
+    loadRbacData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, user?.id]);
+
+  const login = useCallback(
+    async ({ email, password }) => {
+      setLoading(true);
+
+      try {
+        const authSession = await loginUser({ email, password });
+        applySession(authSession);
+        return authSession;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [applySession],
+  );
+
+  const logout = useCallback(() => {
+    applySession(null);
+  }, [applySession]);
+
+  const setUser = useCallback(
+    (nextUser) => {
+      if (!nextUser || !token) {
         return;
       }
 
-      const nextUser = buildCurrentUser(nextSession?.user ?? null);
+      applySession({ token, user: nextUser });
+    },
+    [applySession, token],
+  );
 
-      setSession(nextSession ?? null);
-      setToken(nextSession?.access_token ?? "");
-      setCurrentUser(nextUser);
-      setUsers((previousUsers) => mergeUsers(previousUsers, nextUser));
-      setStoredSession({
-        token: nextSession?.access_token ?? "",
-        user: nextUser,
-      });
-      setLoading(false);
-    };
-
-    if (!supabase) {
-      const storedSession = getStoredSession();
-
-      if (storedSession?.user) {
-        setToken(storedSession.token ?? "");
-        setCurrentUser(storedSession.user);
-        setUsers((previousUsers) => mergeUsers(previousUsers, storedSession.user));
+  const canAccess = useCallback(
+    (moduleName, action = "view") => {
+      if (!user || !moduleName) {
+        return false;
       }
 
-      setLoading(false);
-      return undefined;
-    }
+      const directPermission = permissionName(moduleName, action);
+      const aliasPermissions = (PERMISSION_ALIASES[moduleName] ?? []).map((alias) =>
+        permissionName(alias, action),
+      );
+      const userPermissions = user.permissions ?? [];
 
-    const initializeSession = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-
-        if (error) {
-          throw error;
-        }
-
-        applySession(data.session ?? null);
-      } catch {
-        applySession(null);
-      }
-    };
-
-    initializeSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      console.log("Auth Event:", event);
-
-      if (nextSession) {
-        console.log("Authenticated");
-      } else {
-        console.log("No Session");
+      if (
+        userPermissions.includes("*") ||
+        userPermissions.includes(directPermission) ||
+        aliasPermissions.some((permission) => userPermissions.includes(permission))
+      ) {
+        return true;
       }
 
-      applySession(nextSession ?? null);
-    });
+      return (
+        hasModulePermission(user.role, moduleName, action, rolePermissions) ||
+        hasModulePermission(normalizeRoleKey(user.role), moduleName, action, rolePermissions)
+      );
+    },
+    [rolePermissions, user],
+  );
 
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
+  const hasRole = useCallback(
+    (allowedRoles = []) => {
+      if (!allowedRoles.length) {
+        return true;
+      }
 
-  const switchUser = async (email) => {
-    const selectedUser = users.find((user) => user.email === email);
+      const currentRole = normalizeRoleKey(user?.role);
+      return Boolean(
+        currentRole && allowedRoles.map(normalizeRoleKey).includes(currentRole),
+      );
+    },
+    [user?.role],
+  );
 
-    if (selectedUser) {
-      setCurrentUser(selectedUser);
-      setStoredSession({
-        ...(getStoredSession() ?? {}),
-        token,
-        user: selectedUser,
-      });
-    }
-  };
+  const switchUser = useCallback(() => undefined, []);
 
-  const updateRolePermissionMap = async (role, moduleName, actions) => {
-    const nextPermissions = {
-      ...rolePermissions,
-      [role]: {
-        ...(rolePermissions[role] ?? {}),
-        [moduleName]: actions,
-      },
-    };
+  const updateRolePermissionMap = useCallback(
+    async (role, moduleName, actions) => {
+      const roleRecord =
+        rbacRoles.find((item) => item.id === role || item.name === role || item.code === role) ??
+        null;
+      const nextPermissions = {
+        ...rolePermissions,
+        [role]: {
+          ...(rolePermissions[role] ?? {}),
+          [moduleName]: actions,
+        },
+      };
 
-    setRolePermissions(nextPermissions);
+      setRolePermissions(nextPermissions);
 
-    try {
-      await apiRequest("/access-control/role-permissions", {
-        method: "PUT",
-        body: JSON.stringify({
-          role,
-          module: moduleName,
-          actions,
-        }),
-      });
-    } catch {
-      // Frontend fallback keeps the UI responsive when the API is unavailable.
-    }
-  };
+      if (!roleRecord) {
+        return;
+      }
 
-  const assignUserRole = async (userId, role, organizationId) => {
-    const nextUsers = users.map((user) =>
-      user.id === userId ? { ...user, role, organization_id: organizationId } : user,
+      const selectedRoleMap = nextPermissions[role] ?? nextPermissions[roleRecord.name] ?? {};
+      const permissionIds = allPermissions
+        .filter((permission) =>
+          (selectedRoleMap[permission.module] ?? []).includes(permission.action),
+        )
+        .map((permission) => permission.id);
+
+      await updateRolePermissions(roleRecord.id, permissionIds);
+    },
+    [allPermissions, rbacRoles, rolePermissions],
+  );
+
+  const replaceRolePermissionMap = useCallback(
+    async (role, nextModuleMap) => {
+      const roleRecord =
+        rbacRoles.find((item) => item.id === role || item.name === role || item.code === role) ??
+        null;
+      const roleKey = roleRecord?.name ?? role;
+      const normalizedRoleKey = normalizeRoleKey(roleKey);
+
+      setRolePermissions((previousPermissions) => ({
+        ...previousPermissions,
+        [roleKey]: nextModuleMap,
+        [normalizedRoleKey]: nextModuleMap,
+      }));
+
+      if (!roleRecord?.id) {
+        return;
+      }
+
+      const permissionIds = allPermissions
+        .filter((permission) =>
+          (nextModuleMap[permission.module] ?? []).includes(permission.action),
+        )
+        .map((permission) => permission.id);
+
+      await updateRolePermissions(roleRecord.id, permissionIds);
+    },
+    [allPermissions, rbacRoles],
+  );
+
+  const assignUserRole = useCallback(
+    async (userId, role, organizationId) => {
+      const roleRecord =
+        rbacRoles.find((item) => item.id === role || item.name === role || item.code === role) ??
+        null;
+      const nextRoleName = roleRecord?.name ?? role;
+      setManagedUsers((previousUsers) =>
+        previousUsers.map((item) =>
+          item.id === userId
+            ? { ...item, role: nextRoleName, roleId: roleRecord?.id ?? item.roleId, organization_id: organizationId }
+            : item,
+        ),
+      );
+
+      if (user?.id === userId) {
+        setUser({ ...user, role: nextRoleName, roleId: roleRecord?.id, organization_id: organizationId });
+      }
+
+      if (roleRecord?.id) {
+        const updatedUser = await updateUserRole(userId, roleRecord.id);
+        setManagedUsers((previousUsers) =>
+          previousUsers.map((item) => (item.id === userId ? updatedUser : item)),
+        );
+      }
+    },
+    [rbacRoles, setUser, user],
+  );
+
+  const setUserStatus = useCallback(async (userId, isActive) => {
+    setManagedUsers((previousUsers) =>
+      previousUsers.map((item) =>
+        item.id === userId
+          ? { ...item, is_active: isActive, status: isActive ? "active" : "inactive" }
+          : item,
+      ),
     );
 
-    setUsers(nextUsers);
+    const updatedUser = await updateUserStatus(userId, isActive);
+    setManagedUsers((previousUsers) =>
+      previousUsers.map((item) => (item.id === userId ? updatedUser : item)),
+    );
+  }, []);
 
-    if (currentUser?.id === userId) {
-      setCurrentUser((previousUser) =>
-        previousUser ? { ...previousUser, role, organization_id: organizationId } : previousUser,
-      );
-    }
+  const moduleList = useMemo(() => {
+    const modulesFromPermissions = [
+      ...new Set(allPermissions.map((permission) => permission.module).filter(Boolean)),
+    ];
 
-    try {
-      await apiRequest("/access-control/users/role", {
-        method: "PUT",
-        body: JSON.stringify({
-          userId,
-          role,
-          organization_id: organizationId,
-        }),
-      });
-    } catch {
-      // Frontend fallback keeps the UI responsive when the API is unavailable.
-    }
-  };
+    return modulesFromPermissions.length > 0 ? modulesFromPermissions : ERP_MODULES;
+  }, [allPermissions]);
 
-  const value = useMemo(() => {
-    const permissions = buildPermissionMap(currentUser?.role);
+  const roleNames = useMemo(() => {
+    const namesFromApi = rbacRoles.map((role) => role.name || role.code).filter(Boolean);
+    return namesFromApi.length > 0 ? namesFromApi : ERP_ROLES;
+  }, [rbacRoles]);
 
-    return {
-      session,
-      user: currentUser,
+  const value = useMemo(
+    () => ({
+      user,
+      currentUser: user,
       setUser,
-      isAuthenticated: Boolean(currentUser),
-      loading,
       token,
-      currentUser,
-      users,
-      roles: fallbackRoles,
-      modules: Object.keys(fallbackModules),
+      role: user?.role ?? "",
+      loading,
+      isAuthenticated: Boolean(token && user),
+      session: token && user ? { token, user } : null,
+      rbacRoles,
+      allPermissions,
+      roles: roleNames,
+      modules: moduleList,
+      users: managedUsers,
       rolePermissions,
-      permissions,
-      canAccess(moduleName, action = "view") {
-        const moduleActions =
-          rolePermissions[currentUser?.role]?.[moduleName] ??
-          permissions[moduleName] ??
-          [];
-
-        return moduleActions.includes(action);
-      },
+      permissions: rolePermissions[user?.role] ?? {},
+      login,
+      logout,
+      canAccess,
+      hasRole,
       switchUser,
       assignUserRole,
+      setUserStatus,
       updateRolePermissionMap,
-    };
-  }, [currentUser, loading, rolePermissions, session, token, users]);
+      replaceRolePermissionMap,
+    }),
+    [
+      assignUserRole,
+      canAccess,
+      hasRole,
+      loading,
+      login,
+      logout,
+      managedUsers,
+      moduleList,
+      roleNames,
+      rolePermissions,
+      rbacRoles,
+      allPermissions,
+      setUser,
+      setUserStatus,
+      replaceRolePermissionMap,
+      switchUser,
+      token,
+      updateRolePermissionMap,
+      user,
+    ],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

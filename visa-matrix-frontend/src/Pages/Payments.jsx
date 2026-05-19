@@ -50,12 +50,8 @@ export default function Payments() {
   }, []);
 
   const scopedPayments = useMemo(() => {
-    if (currentUser?.role === "admin" || currentUser?.role === "manager") {
+    if (["super_admin", "admin", "finance"].includes(currentUser?.role)) {
       return payments;
-    }
-
-    if (currentUser?.role === "external_user") {
-      return payments.filter((payment) => payment.customer.toLowerCase().includes("nexa"));
     }
 
     return payments.filter((payment) => payment.paymentStatus !== "Paid");

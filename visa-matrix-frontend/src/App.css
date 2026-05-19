@@ -1056,6 +1056,69 @@
   gap: 0.55rem;
 }
 
+.permission-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(92px, 1fr));
+  gap: 0.5rem;
+}
+
+.permission-toggle,
+.status-toggle {
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--subtle-text);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.84rem;
+  font-weight: 700;
+  gap: 0.45rem;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0.45rem 0.6rem;
+  text-transform: capitalize;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.permission-toggle input,
+.status-toggle input {
+  accent-color: var(--vm-primary);
+  block-size: 15px;
+  inline-size: 15px;
+}
+
+.permission-toggle--active,
+.status-toggle--active {
+  background: rgba(14, 165, 233, 0.12);
+  border-color: rgba(14, 165, 233, 0.45);
+  color: var(--text-main);
+}
+
+.permission-toggle:has(input:disabled),
+.status-toggle:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.settings-form-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(240px, 1.2fr);
+}
+
+.table-select {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  min-height: 36px;
+  padding: 0.4rem 0.6rem;
+  width: 100%;
+}
+
 .tag {
   border-radius: 999px;
   padding: 0.42rem 0.72rem;

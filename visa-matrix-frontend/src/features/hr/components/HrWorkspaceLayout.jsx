@@ -6,17 +6,17 @@ import { useAuth } from "../../../context/AuthContext";
 import "../hr.css";
 
 const sections = [
-  { path: "/hr/dashboard", label: "Dashboard", roles: ["admin", "manager", "hr", "finance", "agent"] },
-  { path: "/hr/employees", label: "Employees", roles: ["admin", "manager", "hr", "finance", "agent"] },
-  { path: "/hr/payroll", label: "Payroll", roles: ["admin", "manager", "hr", "finance"] },
-  { path: "/hr/workflows", label: "Workflows", roles: ["admin", "manager", "hr"] },
-  { path: "/hr/recruitment", label: "Recruitment", roles: ["admin", "manager", "hr"] },
-  { path: "/hr/performance", label: "Performance", roles: ["admin", "manager", "hr"] },
+  { path: "/hr/dashboard", label: "Dashboard", roles: ["super_admin", "admin", "hr", "finance"] },
+  { path: "/hr/employees", label: "Employees", roles: ["super_admin", "admin", "hr"] },
+  { path: "/hr/payroll", label: "Payroll", roles: ["super_admin", "admin", "hr", "finance"] },
+  { path: "/hr/workflows", label: "Workflows", roles: ["super_admin", "admin", "hr"] },
+  { path: "/hr/recruitment", label: "Recruitment", roles: ["super_admin", "admin", "hr"] },
+  { path: "/hr/performance", label: "Performance", roles: ["super_admin", "admin", "hr"] },
 ];
 
 export default function HrWorkspaceLayout({ title, description, action, children }) {
   const { currentUser } = useAuth();
-  const visibleSections = sections.filter((section) => section.roles.includes(currentUser?.role ?? "agent"));
+  const visibleSections = sections.filter((section) => section.roles.includes(currentUser?.role ?? ""));
 
   return (
     <DashboardLayout>

@@ -1,63 +1,31 @@
 import { normalizeVisaType } from "../utils/visaType";
-import { supabase } from "../supabase";
 import apiClient, { extractResponseData } from "./apiClient";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ??
-  import.meta.env.VITE_API_BASE_URL ??
-  "http://localhost:5000/api";
+export { API_BASE_URL, API_ENDPOINTS, default as apiClient } from "./apiClient";
 
 export const apiRequest = async (endpoint, options = {}) => {
   try {
-    const {
-      data: { session },
-    } = supabase ? await supabase.auth.getSession() : { data: { session: null } };
-
-    const token = session?.access_token;
-    const headers = {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    };
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
+    const response = await apiClient.request({
+      url: endpoint,
+      method: options.method ?? "GET",
+      data: options.body,
+      params: options.params,
+      headers: options.headers,
     });
-
-    let data = [];
-
-    try {
-      data = await response.json();
-    } catch {
-      data = [];
-    }
-
-    if (!response.ok) {
-      return {
-        success: false,
-        status: response.status,
-        data: [],
-        error: data?.error || "Request failed",
-      };
-    }
 
     return {
       success: true,
       status: response.status,
-      data,
+      data: response.data,
     };
   } catch (error) {
     console.error("API Request Error:", error);
 
     return {
       success: false,
-      status: 500,
+      status: error?.response?.status ?? 500,
       data: [],
-      error: error.message,
+      error: error?.response?.data?.error ?? error?.response?.data?.message ?? error.message,
     };
   }
 };

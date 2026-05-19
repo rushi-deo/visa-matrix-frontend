@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { navigationItems } from "../data/navigation";
 import { useAuth } from "../context/AuthContext";
-import { signOutUser } from "../services/authService";
 import { fetchNotifications } from "../services/notifications.service";
 import { searchWorkspace } from "../services/search.service";
 
@@ -27,7 +26,7 @@ const pageTitles = {
 export default function TopNavbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { canAccess, currentUser } = useAuth();
+  const { canAccess, currentUser, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [searchValue, setSearchValue] = useState("");
@@ -136,13 +135,9 @@ export default function TopNavbar() {
   }, [location.pathname]);
 
   const handleLogout = async () => {
-    try {
-      await signOutUser();
-      setMenuOpen(false);
-      navigate("/login", { replace: true });
-    } catch (error) {
-      alert(error.message || "Unable to log out.");
-    }
+    logout();
+    setMenuOpen(false);
+    navigate("/login", { replace: true });
   };
 
   const handleSearchSelect = (path) => {

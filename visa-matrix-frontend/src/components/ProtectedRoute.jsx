@@ -7,9 +7,10 @@ export default function ProtectedRoute({
   children,
   module,
   action = "view",
+  allowedRoles = [],
   fallbackTitle = "Access Restricted",
 }) {
-  const { canAccess, loading, currentUser } = useAuth();
+  const { canAccess, hasRole, loading, currentUser } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -29,6 +30,21 @@ export default function ProtectedRoute({
 
   if (!currentUser) {
     return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  if (allowedRoles.length > 0 && !hasRole(allowedRoles)) {
+    return (
+      <DashboardLayout>
+        <section className="panel">
+          <div className="panel__header">
+            <div>
+              <h3>{fallbackTitle}</h3>
+              <p>{currentUser?.name ?? "Current user"} is not assigned to this role group.</p>
+            </div>
+          </div>
+        </section>
+      </DashboardLayout>
+    );
   }
 
   if (module && !canAccess(module, action)) {

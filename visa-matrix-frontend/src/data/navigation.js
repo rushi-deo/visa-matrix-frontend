@@ -1,17 +1,19 @@
 export const navigationItems = [
-  { label: "Dashboard", path: "/dashboard", shortLabel: "Dashboard" },
-  { label: "Customers", path: "/customers", shortLabel: "Customers" },
+  { label: "Dashboard", path: "/dashboard", shortLabel: "Dashboard", module: "dashboard" },
+  { label: "Customers", path: "/customers", shortLabel: "Customers", module: "customers" },
   {
     label: "Visa Applications",
     path: "/applications",
     shortLabel: "Applications",
+    module: "applications",
   },
   {
     label: "Countries & Visa Rules",
     path: "/countries",
     shortLabel: "Countries",
+    module: "countries",
   },
-  { label: "Documents", path: "/documents", shortLabel: "Documents" },
+  { label: "Documents", path: "/documents", shortLabel: "Documents", module: "documents" },
   {
     label: "Payments & Invoices",
     path: "/payments",
@@ -25,21 +27,25 @@ export const navigationItems = [
     label: "Workflow Automation",
     path: "/workflow",
     shortLabel: "Workflow",
+    module: "workflow",
   },
   {
     label: "Visa Question Flow",
     path: "/visa-question-flow",
     shortLabel: "Questions",
+    module: "visa_questions",
   },
   {
     label: "Tasks / Case Management",
     path: "/tasks",
     shortLabel: "Tasks",
+    module: "tasks",
   },
   {
     label: "Reports & Analytics",
     path: "/reports",
     shortLabel: "Reports",
+    module: "reports",
   },
   { label: "Admin Settings", path: "/admin", shortLabel: "Admin", module: "settings" },
   { label: "Settings", path: "/settings", shortLabel: "Settings", module: "settings" },

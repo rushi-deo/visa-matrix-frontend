@@ -13,6 +13,8 @@ const primaryPaths = [
   "/hr/dashboard",
   "/communication",
   "/audit-logs",
+  "/workflow",
+  "/visa-question-flow",
   "/tasks",
   "/reports",
   "/admin",
@@ -29,6 +31,8 @@ const sidebarLabels = {
   "/hr/dashboard": "HR",
   "/communication": "Notifications",
   "/audit-logs": "Audit Logs",
+  "/workflow": "Workflow",
+  "/visa-question-flow": "Questions",
   "/tasks": "Tasks",
   "/reports": "Reports",
   "/admin": "Admin",
@@ -86,6 +90,18 @@ const menuIcons = {
     <svg viewBox="0 0 20 20" fill="none">
       <path d="M5 4.5h10v11H5z" />
       <path d="M7.5 8h5M7.5 11h5" />
+    </svg>
+  ),
+  "/workflow": (
+    <svg viewBox="0 0 20 20" fill="none">
+      <path d="M5 5.5h4v4H5zm6 5h4v4h-4z" />
+      <path d="M9 7.5h2.5a1.5 1.5 0 011.5 1.5v1.5M11 12.5H8.5A1.5 1.5 0 017 11V9.5" />
+    </svg>
+  ),
+  "/visa-question-flow": (
+    <svg viewBox="0 0 20 20" fill="none">
+      <path d="M10 17a7 7 0 100-14 7 7 0 000 14z" />
+      <path d="M8.4 8a1.8 1.8 0 113.1 1.2c-.7.6-1.5 1-1.5 2.1M10 14h.01" />
     </svg>
   ),
   "/tasks": (
