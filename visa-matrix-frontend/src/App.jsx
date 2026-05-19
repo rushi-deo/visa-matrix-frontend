@@ -170,6 +170,17 @@ export default function App() {
             }
           />
           <Route
+            path="/hr/employee-profile"
+            element={
+              <ProtectedRoute
+                module="hr"
+                allowedRoles={["super_admin", "admin", "hr"]}
+              >
+                <HREmployeeProfileWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/hr/payroll"
             element={
               <ProtectedRoute

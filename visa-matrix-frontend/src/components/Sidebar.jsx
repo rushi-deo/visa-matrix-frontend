@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { navigationItems } from "../data/navigation";
 import { useAuth } from "../context/AuthContext";
@@ -120,6 +120,12 @@ const menuIcons = {
       <path d="M10 12.2a2.2 2.2 0 100-4.4 2.2 2.2 0 000 4.4z" />
     </svg>
   ),
+  HR: (
+    <svg viewBox="0 0 20 20" fill="none">
+      <path d="M7 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 1a2 2 0 100-4 2 2 0 000 4z" />
+      <path d="M2.5 15a4.5 4.5 0 019 0m1.5 0a3.5 3.5 0 014.5-3.3" />
+    </svg>
+  ),
   "/settings": (
     <svg viewBox="0 0 20 20" fill="none">
       <path d="M10 3.5l1.6.7 1.7-.4.9 1.5 1.6.8-.2 1.8 1 1.4-1 1.4.2 1.8-1.6.8-.9 1.5-1.7-.4-1.6.7-1.6-.7-1.7.4-.9-1.5-1.6-.8.2-1.8-1-1.4 1-1.4-.2-1.8 1.6-.8.9-1.5 1.7.4z" />
@@ -131,12 +137,28 @@ const menuIcons = {
 export default function Sidebar() {
   const location = useLocation();
   const { canAccess } = useAuth();
-  const primaryNavigation = navigationItems.filter(
-    (item) =>
+  const [expandedMenus, setExpandedMenus] = useState({});
+
+  const toggleMenu = (key) => {
+    setExpandedMenus((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const primaryNavigation = navigationItems.filter((item) => {
+    // Check if item has children (submenu)
+    if (item.children) {
+      // For parent items, just check module access
+      return !item.module || canAccess(item.module, "view");
+    }
+    // For regular items, use the original filter logic
+    return (
       primaryPaths.includes(item.path) &&
       (!item.module || canAccess(item.module, "view")) &&
-      item.path !== "/settings",
-  );
+      item.path !== "/settings"
+    );
+  });
 
   return (
     <aside className="sidebar">
@@ -154,6 +176,77 @@ export default function Sidebar() {
 
       <nav className="sidebar__nav" aria-label="Primary">
         {primaryNavigation.map((item) => {
+          // Handle submenu items
+          if (item.children) {
+            const hasActiveChild = item.children.some(
+              (child) => child.path && location.pathname.startsWith(child.path),
+            );
+            const isExpanded = expandedMenus[item.shortLabel] || hasActiveChild;
+
+            return (
+              <div key={item.shortLabel} className="sidebar__menu-group">
+                <button
+                  onClick={() => toggleMenu(item.shortLabel)}
+                  className={`sidebar__link sidebar__menu-toggle ${
+                    hasActiveChild ? "sidebar__link--active" : ""
+                  } ${isExpanded ? "sidebar__menu-toggle--expanded" : ""}`}
+                  aria-expanded={isExpanded}
+                >
+                  <span className="sidebar__icon" aria-hidden="true">
+                    {menuIcons[item.shortLabel] || (
+                      <svg viewBox="0 0 20 20" fill="none">
+                        <path d="M7 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zm6 1a2 2 0 100-4 2 2 0 000 4z" />
+                        <path d="M2.5 15a4.5 4.5 0 019 0m1.5 0a3.5 3.5 0 014.5-3.3" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="sidebar__label">{item.shortLabel}</span>
+                  <span className="sidebar__chevron" aria-hidden="true">
+                    <svg
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      className={`transition-transform ${
+                        isExpanded ? "rotate-180" : ""
+                      }`}
+                    >
+                      <path
+                        d="M7 8l3 3 3-3"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                </button>
+
+                {isExpanded && (
+                  <div className="sidebar__submenu">
+                    {item.children.map((child) => {
+                      const isActive =
+                        child.path && location.pathname.startsWith(child.path);
+
+                      return (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          className={`sidebar__submenu-link ${
+                            isActive ? "sidebar__submenu-link--active" : ""
+                          }`}
+                        >
+                          <span className="sidebar__submenu-label">
+                            {child.shortLabel}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // Handle regular menu items
           const isDashboardRoute =
             item.path === "/dashboard" &&
             (location.pathname === "/" || location.pathname === "/dashboard");
