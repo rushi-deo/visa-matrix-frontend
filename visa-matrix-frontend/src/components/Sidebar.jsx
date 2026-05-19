@@ -10,14 +10,13 @@ const primaryPaths = [
   "/countries",
   "/documents",
   "/payments",
-  "/hr/dashboard",
   "/communication",
-  "/audit-logs",
   "/workflow",
   "/visa-question-flow",
   "/tasks",
   "/reports",
   "/admin",
+  "/hr/dashboard",
   "/settings",
 ];
 

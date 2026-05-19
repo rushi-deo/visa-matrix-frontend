@@ -13,12 +13,16 @@ import Customers from "./Pages/Customers";
 import Dashboard from "./Pages/Dashboard";
 import Documents from "./Pages/Documents";
 import HR from "./Pages/HR";
+import HRAuditLogsWorkspace from "./Pages/HRAuditLogsWorkspace";
 import HRDashboardWorkspace from "./Pages/HRDashboardWorkspace";
+import HRDepartmentSetupWorkspace from "./Pages/HRDepartmentSetupWorkspace";
 import HREmployeesWorkspace from "./Pages/HREmployeesWorkspace";
 import HREmployeeProfileWorkspace from "./Pages/HREmployeeProfileWorkspace";
-import HRPayrollWorkspace from "./Pages/HRPayrollWorkspace";
+import HRPlaceholderWorkspace from "./Pages/HRPlaceholderWorkspace";
 import HRPerformanceWorkspace from "./Pages/HRPerformanceWorkspace";
 import HRRecruitmentWorkspace from "./Pages/HRRecruitmentWorkspace";
+import HRRolesPermissionsWorkspace from "./Pages/HRRolesPermissionsWorkspace";
+import HRSettingsWorkspace from "./Pages/HRSettingsWorkspace";
 import HRWorkflowWorkspace from "./Pages/HRWorkflowWorkspace";
 import Payments from "./Pages/Payments";
 import Reports from "./Pages/Reports";
@@ -157,7 +161,47 @@ export default function App() {
             path="/hr/payroll"
             element={
               <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr", "finance"]}>
-                <HRPayrollWorkspace />
+                <HRPlaceholderWorkspace title="Payroll" description="Payroll and salary management." />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/roles-permissions"
+            element={
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+                <HRRolesPermissionsWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/departments"
+            element={
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+                <HRDepartmentSetupWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/attendance"
+            element={
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+                <HRPlaceholderWorkspace title="Attendance" description="Attendance management module." />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/audit-logs"
+            element={
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+                <HRAuditLogsWorkspace />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/hr/settings"
+            element={
+              <ProtectedRoute module="hr" allowedRoles={["super_admin", "admin", "hr"]}>
+                <HRSettingsWorkspace />
               </ProtectedRoute>
             }
           />

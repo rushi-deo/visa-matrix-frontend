@@ -31,16 +31,92 @@ export const hrWorkspaceApi = {
       async () => extractResponseData(await apiClient.get("/v1/hr/employees", { params })),
       async () => {
         const search = String(params.search ?? "").toLowerCase();
+        const department = String(params.department ?? "All");
+        const status = String(params.status ?? "All").toLowerCase();
         const filtered = mockState.employees.filter((employee) =>
-          !search ||
-          [employee.name, employee.email, employee.department, employee.job_title]
+          (!search ||
+          [employee.name, employee.email, employee.department, employee.job_title, employee.role_template]
             .join(" ")
             .toLowerCase()
-            .includes(search),
+            .includes(search)) &&
+          (department === "All" || employee.department === department) &&
+          (status === "all" || employee.status === status),
         );
 
         return wrapCollection(structuredClone(filtered));
       },
+    );
+  },
+  async createEmployee(payload) {
+    return withFallback(
+      async () => extractResponseData(await apiClient.post("/v1/hr/employees", payload)),
+      async () => {
+        const record = {
+          id: `emp-${Date.now()}`,
+          employee_code: payload.employeeCode,
+          name: payload.fullName,
+          email: payload.email,
+          phone: payload.phone,
+          date_of_joining: payload.dateOfJoining,
+          department: payload.department,
+          designation: payload.designation,
+          job_title: payload.designation,
+          location: payload.branch,
+          reporting_manager: payload.manager,
+          team_lead: payload.teamLead,
+          branch: payload.branch,
+          role_template: payload.roleTemplate,
+          status: payload.status,
+          attrition_risk: "low",
+        };
+
+        mockState.employees = [record, ...mockState.employees];
+        mockState.dashboard.metrics.totalEmployees += 1;
+        if (record.status === "active") {
+          mockState.dashboard.metrics.activeEmployees += 1;
+        }
+        mockState.auditLogs = [
+          {
+            id: `hr-audit-${Date.now()}`,
+            actor: "HR Workspace",
+            event: "Employee created",
+            target: record.name,
+            created_at: new Date().toISOString(),
+          },
+          ...mockState.auditLogs,
+        ];
+
+        return structuredClone(record);
+      },
+    );
+  },
+  async getRoleTemplates() {
+    return withFallback(
+      async () => extractResponseData(await apiClient.get("/v1/hr/role-templates")),
+      async () => wrapCollection(structuredClone(mockState.roleTemplates)),
+    );
+  },
+  async updateRoleTemplatePermissions(roleName, permissions) {
+    return withFallback(
+      async () => extractResponseData(await apiClient.put(`/v1/hr/role-templates/${roleName}/permissions`, { permissions })),
+      async () => {
+        mockState.roleTemplates = mockState.roleTemplates.map((roleTemplate) =>
+          roleTemplate.name === roleName ? { ...roleTemplate, permissions } : roleTemplate,
+        );
+        return structuredClone(mockState.roleTemplates.find((roleTemplate) => roleTemplate.name === roleName));
+      },
+    );
+  },
+  async getDepartments() {
+    return withFallback(
+      async () => extractResponseData(await apiClient.get("/v1/hr/departments")),
+      async () => wrapCollection(structuredClone(mockState.departments)),
+    );
+  },
+  async getAuditLogs() {
+    return withFallback(
+      async () => extractResponseData(await apiClient.get("/v1/hr/audit-logs")),
+      async () => wrapCollection(structuredClone(mockState.auditLogs)),
     );
   },
   async getEmployeeProfile(employeeId) {

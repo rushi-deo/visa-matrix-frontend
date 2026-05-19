@@ -20,7 +20,6 @@ export const navigationItems = [
     shortLabel: "Payments",
     module: "invoicing",
   },
-  { label: "HR", path: "/hr/dashboard", shortLabel: "HR", module: "hr" },
   { label: "Notifications", path: "/communication", shortLabel: "Notifications", module: "notifications" },
   { label: "Audit Logs", path: "/audit-logs", shortLabel: "Audit Logs", module: "audit_logs" },
   {
@@ -48,5 +47,6 @@ export const navigationItems = [
     module: "reports",
   },
   { label: "Admin Settings", path: "/admin", shortLabel: "Admin", module: "settings" },
+  { label: "HR", path: "/hr/dashboard", shortLabel: "HR", module: "hr" },
   { label: "Settings", path: "/settings", shortLabel: "Settings", module: "settings" },
 ];

@@ -6,12 +6,14 @@ import { useAuth } from "../../../context/AuthContext";
 import "../hr.css";
 
 const sections = [
-  { path: "/hr/dashboard", label: "Dashboard", roles: ["super_admin", "admin", "hr", "finance"] },
-  { path: "/hr/employees", label: "Employees", roles: ["super_admin", "admin", "hr"] },
+  { path: "/hr/dashboard", label: "HR Workspace", roles: ["super_admin", "admin", "hr", "finance"] },
+  { path: "/hr/employees", label: "Employee Management", roles: ["super_admin", "admin", "hr"] },
+  { path: "/hr/roles-permissions", label: "Roles & Permissions", roles: ["super_admin", "admin", "hr"] },
+  { path: "/hr/departments", label: "Department Setup", roles: ["super_admin", "admin", "hr"] },
+  { path: "/hr/attendance", label: "Attendance", roles: ["super_admin", "admin", "hr"] },
   { path: "/hr/payroll", label: "Payroll", roles: ["super_admin", "admin", "hr", "finance"] },
-  { path: "/hr/workflows", label: "Workflows", roles: ["super_admin", "admin", "hr"] },
-  { path: "/hr/recruitment", label: "Recruitment", roles: ["super_admin", "admin", "hr"] },
-  { path: "/hr/performance", label: "Performance", roles: ["super_admin", "admin", "hr"] },
+  { path: "/hr/audit-logs", label: "Audit Logs", roles: ["super_admin", "admin", "hr"] },
+  { path: "/hr/settings", label: "HR Settings", roles: ["super_admin", "admin", "hr"] },
 ];
 
 export default function HrWorkspaceLayout({ title, description, action, children }) {
@@ -23,8 +25,8 @@ export default function HrWorkspaceLayout({ title, description, action, children
       <PageHeader title={title} description={description} action={action} />
       <section className="hr-hero">
         <div>
-          <span className="page-header__eyebrow">Enterprise HR Command Center</span>
-          <h3>Workforce operations, payroll controls, workflows, analytics, and AI signals in one secure workspace.</h3>
+          <span className="page-header__eyebrow">Enterprise HR Workspace</span>
+          <h3>Employees, departments, permissions, approvals, and organization controls in one secure workspace.</h3>
         </div>
         <div className="hr-hero-badges">
           <span className="tag">Role: {currentUser?.role}</span>

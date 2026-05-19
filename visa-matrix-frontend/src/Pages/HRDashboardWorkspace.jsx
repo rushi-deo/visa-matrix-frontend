@@ -1,45 +1,67 @@
 import React from "react";
-import { useEffect } from "react";
-import { useState } from "react";
-import FormEngine from "../components/FormEngine";
+import { Link } from "react-router-dom";
 import StatCard from "../components/StatCard";
 import { hrWorkspaceApi } from "../features/hr/api/hrWorkspaceApi";
 import HrErrorState from "../features/hr/components/HrErrorState";
 import HrLoadingState from "../features/hr/components/HrLoadingState";
-import HrTrendBars from "../features/hr/components/HrTrendBars";
 import HrWorkspaceLayout from "../features/hr/components/HrWorkspaceLayout";
 import { useHrResource } from "../features/hr/hooks/useHrResource";
-import { getFormSchema } from "../services/formService";
+
+const workspaceCards = [
+  {
+    title: "Employee Management",
+    description: "Create and manage employee accounts and reporting structure.",
+    path: "/hr/employees",
+    meta: "Directory",
+  },
+  {
+    title: "Roles & Permissions",
+    description: "Manage role templates and access permissions.",
+    path: "/hr/roles-permissions",
+    meta: "Access",
+  },
+  {
+    title: "Department Setup",
+    description: "Configure departments, hierarchy, and reporting structure.",
+    path: "/hr/departments",
+    meta: "Structure",
+  },
+  {
+    title: "Audit Logs",
+    description: "Track employee and permission changes.",
+    path: "/hr/audit-logs",
+    meta: "Audit",
+  },
+  {
+    title: "Attendance",
+    description: "Attendance management module.",
+    path: "/hr/attendance",
+    meta: "Placeholder",
+  },
+  {
+    title: "Payroll",
+    description: "Payroll and salary management.",
+    path: "/hr/payroll",
+    meta: "Placeholder",
+  },
+];
 
 export default function HRDashboardWorkspace() {
-  const [country, setCountry] = useState("");
-  const [visaType, setVisaType] = useState("tourist");
-
   const { data, error, loading, reload } = useHrResource(
     async () => {
-      const [dashboard, aiInsights, notifications] = await Promise.all([
+      const [dashboard, employees] = await Promise.all([
         hrWorkspaceApi.getDashboard(),
-        hrWorkspaceApi.getAiInsights(),
-        hrWorkspaceApi.getNotifications(),
+        hrWorkspaceApi.getEmployees(),
       ]);
 
-      return { dashboard, aiInsights, notifications };
+      return { dashboard, employees };
     },
     [],
   );
 
-  useEffect(() => {
-    async function testFormFetch() {
-      const data = await getFormSchema("Japan", "tourist");
-      console.log("FORM DATA:", data);
-    }
-
-    testFormFetch();
-  }, []);
-
   if (loading) {
     return (
-      <HrWorkspaceLayout title="HR Dashboard" description="Analytics-led workforce command center.">
+      <HrWorkspaceLayout title="HR Workspace" description="Manage employees, permissions, departments, and organization structure.">
         <HrLoadingState />
       </HrWorkspaceLayout>
     );
@@ -47,62 +69,66 @@ export default function HRDashboardWorkspace() {
 
   if (error) {
     return (
-      <HrWorkspaceLayout title="HR Dashboard" description="Analytics-led workforce command center.">
+      <HrWorkspaceLayout title="HR Workspace" description="Manage employees, permissions, departments, and organization structure.">
         <HrErrorState message={error} onRetry={reload} />
       </HrWorkspaceLayout>
     );
   }
 
-  const funnelItems = Object.entries(data.dashboard.analytics.hiringFunnel).map(([stage, value]) => ({
-    stage,
-    value,
-  }));
+  const metrics = data.dashboard.metrics;
+  const departments = new Set((data.employees.items ?? []).map((employee) => employee.department)).size;
 
   return (
-    <HrWorkspaceLayout title="HR Dashboard" description="Analytics-led workforce command center.">
-      <section className="panel">
-        <select value={country} onChange={(e) => setCountry(e.target.value)}>
-          <option value="">Select Country</option>
-          <option value="Japan">Japan</option>
-        </select>
-
-        <FormEngine country={country} visaType={visaType} />
+    <HrWorkspaceLayout
+      title="HR Workspace"
+      description="Manage employees, permissions, departments, and organization structure."
+      action={
+        <div className="button-row">
+          <Link className="primary-button" to="/hr/employees?create=1">
+            Create Employee
+          </Link>
+          <Link className="secondary-button" to="/hr/settings">
+            HR Settings
+          </Link>
+        </div>
+      }
+    >
+      <section className="summary-grid">
+        <StatCard title="Total Employees" value={metrics.totalEmployees} icon="TE" color="#2563EB" />
+        <StatCard title="Active Employees" value={metrics.activeEmployees} icon="AE" color="#16A34A" />
+        <StatCard title="Departments" value={metrics.departments ?? departments} icon="DS" color="#0F766E" />
+        <StatCard title="Pending Approvals" value={data.dashboard.highlights.approvalsPending} icon="PA" color="#F97316" />
       </section>
 
-      <section className="stats-grid">
-        <StatCard title="Employees" value={data.dashboard.metrics.totalEmployees} icon="HC" color="#0f766e" />
-        <StatCard title="Active Headcount" value={data.dashboard.metrics.activeEmployees} icon="AH" color="#1d4ed8" />
-        <StatCard title="Open Positions" value={data.dashboard.metrics.openPositions} icon="OP" color="#b45309" />
-        <StatCard title="Payroll Cost" value={`INR ${data.dashboard.metrics.payrollCost.toLocaleString()}`} icon="PC" color="#047857" />
-        <StatCard title="Attrition Rate" value={`${data.dashboard.metrics.attritionRate}%`} icon="AR" color="#be123c" />
-        <StatCard title="Approvals Pending" value={data.dashboard.highlights.approvalsPending} icon="WF" color="#4338ca" />
+      <section className="hr-workspace-grid">
+        {workspaceCards.map((card) => (
+          <Link className="hr-action-card" key={card.title} to={card.path}>
+            <span className="tag">{card.meta}</span>
+            <strong>{card.title}</strong>
+            <p>{card.description}</p>
+          </Link>
+        ))}
       </section>
 
-      <section className="page-grid page-grid--two">
-        <HrTrendBars title="Hiring Funnel" items={funnelItems} valueKey="value" labelKey="stage" />
-        <HrTrendBars
-          title="Department Performance"
-          items={data.dashboard.analytics.departmentPerformance}
-          valueKey="score"
-          labelKey="department"
-          formatter={(value) => `${value}/5`}
-        />
-      </section>
-
-      <section className="page-grid page-grid--two">
+      <section className="workflow-grid">
         <article className="panel">
           <div className="panel__header">
             <div>
-              <h3>AI Attrition Signals</h3>
-              <p>Rule-based early warning signals with ML hook placeholders.</p>
+              <h3>Workspace Sections</h3>
+              <p>Core HR setup areas grouped for employee lifecycle and access operations.</p>
             </div>
           </div>
-          <div className="alert-stack">
-            {data.aiInsights.attritionSignals.map((signal) => (
-              <article className={`alert-card ${signal.risk_score >= 70 ? "alert-card--danger" : "alert-card--warning"}`} key={signal.employee_id}>
-                <span className="alert-card__eyebrow">{signal.employee_name}</span>
-                <strong>{signal.recommendation}</strong>
-              </article>
+          <div className="kpi-list">
+            {workspaceCards.slice(0, 4).map((card) => (
+              <div className="kpi-item" key={card.title}>
+                <div className="message-thread">
+                  <strong>{card.title}</strong>
+                  <p>{card.description}</p>
+                </div>
+                <Link className="ghost-button" to={card.path}>
+                  Open
+                </Link>
+              </div>
             ))}
           </div>
         </article>
@@ -110,16 +136,19 @@ export default function HRDashboardWorkspace() {
         <article className="panel">
           <div className="panel__header">
             <div>
-              <h3>Operational Notifications</h3>
-              <p>Workflow, payroll, and workforce alerts generated by the HR event bus.</p>
+              <h3>HR Readiness</h3>
+              <p>Placeholder workspaces are in place for staged backend integration.</p>
             </div>
           </div>
-          <div className="alert-stack">
-            {data.notifications.items.map((notification) => (
-              <article className="alert-card alert-card--info" key={notification.id}>
-                <span className="alert-card__eyebrow">{notification.type}</span>
-                <strong>{notification.message}</strong>
-              </article>
+          <div className="kpi-list">
+            {workspaceCards.slice(4).map((card) => (
+              <div className="kpi-item" key={card.title}>
+                <div className="message-thread">
+                  <strong>{card.title}</strong>
+                  <p>{card.description}</p>
+                </div>
+                <span className="tag">Ready</span>
+              </div>
             ))}
           </div>
         </article>
